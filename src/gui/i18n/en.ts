@@ -131,6 +131,13 @@ export const en = {
     refreshCover: "Refresh cover",
     remove: "Remove from library",
     close: "Close",
+    import: "Import folders",
+    pickImportTitle: "Folder with installed games",
+    imported: "Games added: {count}",
+    importSkipped: "Skipped (no .exe): {names}",
+    installNow: "Install game",
+    installing: "Installing…",
+    installed: "Installed: {name}",
   },
   shell: {
     settings: "Settings",

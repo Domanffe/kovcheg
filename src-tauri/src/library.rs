@@ -20,20 +20,28 @@ const STEAM_CDN: &str = "https://cdn.akamai.steamstatic.com/steam/apps";
 const SCAN_DEPTH: u8 = 2;
 /// Hard stop so a wrong path (a drive root) cannot turn into an endless directory walk.
 const SCAN_LIMIT: usize = 4000;
-/// Names that never are the game itself.
-const EXE_SKIP: [&str; 11] = [
+/// Helper binaries that sit next to a game but are never it. Matched as substrings on the
+/// stem, so they must stay specific: "crash" alone would swallow "CrashoutCrew.exe".
+const EXE_SKIP: [&str; 6] = [
     "unins",
-    "setup",
-    "install",
     "vcredist",
     "vc_redist",
     "dxsetup",
     "dxwebsetup",
     "dotnet",
-    "redist",
-    "crash",
-    "report",
 ];
+
+fn is_helper_exe(stem: &str) -> bool {
+    EXE_SKIP.iter().any(|skip| stem.contains(skip))
+        || stem.ends_with("setup")
+        || stem.contains("setup_")
+        || stem.contains("installer")
+        || stem.contains("redist")
+        || stem.contains("crashhandler")
+        || stem.contains("crashreport")
+        || stem.contains("crashpad")
+        || stem.contains("unitycrash")
+}
 
 fn now_secs() -> u64 {
     SystemTime::now()
@@ -414,6 +422,60 @@ pub fn sanitize_dir_name(title: &str) -> String {
     out.trim().trim_matches('.').to_string()
 }
 
+/// Folder names on disk carry site and repack noise: "Call of Duty - MW4 [FitGirl Repack]",
+/// "GORN-2-SteamRIP.com". Strip it so the card and the Steam lookup see a plain title.
+pub fn clean_title(raw: &str) -> String {
+    let mut text = raw.to_string();
+    while let (Some(start), Some(end)) = (text.find('['), text.find(']')) {
+        if end > start {
+            text.replace_range(start..=end, " ");
+        } else {
+            break;
+        }
+    }
+    let mut text = text;
+    for noise in [
+        "SteamRIP.com",
+        "SteamRIP",
+        "FitGirl Repack",
+        "FitGirl",
+        "Online-Fix",
+        "OnlineFix",
+        "Repack",
+        "GOG",
+        "RIP",
+    ] {
+        text = text.replace(noise, " ");
+    }
+    if let (Some(start), Some(end)) = (text.find('('), text.find(')')) {
+        if end > start {
+            let inner = text[start + 1..end].to_lowercase();
+            if inner.contains("repack") || inner.contains("rip") || inner.contains("fitgirl") {
+                text.replace_range(start..=end, " ");
+            }
+        }
+    }
+    let text = text
+        .replace(['.', '_'], " ")
+        .replace(" - ", "\u{1}")
+        .replace('-', " ")
+        .replace('\u{1}', " - ");
+    let mut out = String::with_capacity(text.len());
+    let mut prev_space = false;
+    for ch in text.chars() {
+        if ch.is_whitespace() {
+            if !prev_space && !out.is_empty() {
+                out.push(' ');
+                prev_space = true;
+            }
+            continue;
+        }
+        prev_space = false;
+        out.push(ch);
+    }
+    out.trim().trim_matches('-').trim().to_string()
+}
+
 fn normalize_words(text: &str) -> Vec<String> {
     text.to_lowercase()
         .split(|c: char| !c.is_alphanumeric())
@@ -486,7 +548,7 @@ pub fn detect_exe(dir: &Path) -> Option<PathBuf> {
             .file_stem()
             .map(|s| s.to_string_lossy().to_lowercase())
             .unwrap_or_default();
-        if EXE_SKIP.iter().any(|skip| stem.contains(skip)) {
+        if is_helper_exe(&stem) {
             continue;
         }
         let words = normalize_words(&stem);
@@ -749,6 +811,85 @@ pub async fn library_add(
         .ok_or_else(|| "game not found".to_string())
 }
 
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ImportReport {
+    pub added: Vec<GameView>,
+    pub skipped: Vec<String>,
+}
+
+/// Imports every direct subfolder that looks like an installed game.
+/// Folders without an executable (a repack still sitting as `fg-*.bin`) are reported, not added.
+#[tauri::command]
+pub async fn library_import(
+    app: AppHandle,
+    state: tauri::State<'_, crate::AppState>,
+    dir: String,
+) -> Result<ImportReport, String> {
+    let root = validate_existing_dir(&dir).map_err(|e| e.to_string())?;
+    let lib = state.library.clone();
+
+    let mut report = ImportReport {
+        added: Vec::new(),
+        skipped: Vec::new(),
+    };
+    let mut candidates: Vec<(String, PathBuf, PathBuf)> = Vec::new();
+    let entries = std::fs::read_dir(&root).map_err(|e| e.to_string())?;
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if !path.is_dir() {
+            continue;
+        }
+        let folder = path
+            .file_name()
+            .map(|n| n.to_string_lossy().into_owned())
+            .unwrap_or_default();
+        match detect_exe(&path) {
+            Some(exe) => {
+                let title = clean_title(&folder);
+                candidates.push((if title.is_empty() { folder } else { title }, path, exe));
+            }
+            None => report.skipped.push(folder),
+        }
+    }
+    candidates.sort_by(|a, b| a.0.to_lowercase().cmp(&b.0.to_lowercase()));
+
+    let mut added_ids: Vec<(String, String)> = Vec::new();
+    let paths;
+    {
+        let mut guard = lib.lock().await;
+        paths = guard.paths().clone();
+        for (title, path, exe) in candidates {
+            if guard.games.iter().any(|g| same_dir(&g.dir, &path)) {
+                continue;
+            }
+            let exe = Some(exe.to_string_lossy().into_owned());
+            match guard.add(title, &path, exe, Some("import".into())) {
+                Ok(game) => added_ids.push((game.id, game.title)),
+                Err(e) => report.skipped.push(e.to_string()),
+            }
+        }
+        let views = guard.views();
+        report.added = views
+            .into_iter()
+            .filter(|v| added_ids.iter().any(|(id, _)| *id == v.id))
+            .collect();
+    }
+
+    for (id, title) in added_ids {
+        spawn_cover_lookup(app.clone(), lib.clone(), paths.clone(), id, title);
+    }
+    broadcast(&app, &lib).await;
+    Ok(report)
+}
+
+fn same_dir(a: &str, b: &Path) -> bool {
+    let (Ok(a), Ok(b)) = (Path::new(a).canonicalize(), b.canonicalize()) else {
+        return a.eq_ignore_ascii_case(&b.to_string_lossy());
+    };
+    a == b
+}
+
 #[tauri::command]
 pub async fn library_set_exe(
     app: AppHandle,
@@ -1001,6 +1142,20 @@ mod tests {
     }
 
     #[test]
+    fn detect_exe_keeps_names_that_merely_contain_helper_words() {
+        let dir = temp_dir("detect-crash");
+        let game = dir.join("Crashout Crew");
+        std::fs::create_dir_all(&game).unwrap();
+        std::fs::write(game.join("CrashoutCrew.exe"), vec![0u8; 1024]).unwrap();
+        std::fs::write(game.join("UnityCrashHandler64.exe"), vec![0u8; 512]).unwrap();
+        std::fs::write(game.join("CrashReporter.exe"), vec![0u8; 512]).unwrap();
+
+        let found = detect_exe(&game).unwrap();
+        assert_eq!(found.file_name().unwrap(), "CrashoutCrew.exe");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
     fn installer_kind_reads_markers() {
         let dir = temp_dir("kind");
         let inno = dir.join("setup.exe");
@@ -1152,6 +1307,18 @@ mod tests {
         assert!(!looks_like_setup(Path::new("C:/dl/GAME/Game.exe")));
         assert!(!looks_like_setup(Path::new("C:/dl/GAME/unins000.exe")));
         assert!(!looks_like_setup(Path::new("C:/dl/GAME/vcredist_x64.exe")));
+    }
+
+    #[test]
+    fn clean_title_drops_site_and_repack_noise() {
+        assert_eq!(
+            clean_title("Call of Duty - MW4 [FitGirl Repack]"),
+            "Call of Duty - MW4"
+        );
+        assert_eq!(clean_title("GORN-2-SteamRIP.com"), "GORN 2");
+        assert_eq!(clean_title("I-Am-Cat-SteamRIP.com"), "I Am Cat");
+        assert_eq!(clean_title("Game.Name.v1.2-OFME"), "Game Name v1 2 OFME");
+        assert_eq!(clean_title("Plain Game"), "Plain Game");
     }
 
     #[test]

@@ -19,6 +19,7 @@ export const SOURCE_STYLE: Record<SourceId, { tag: string; color: string }> = {
   anilibria: { tag: "AL", color: "#fb7185" },
   "tpb-movies": { tag: "TPB", color: "#14B8A6" },
   "tpb-tv": { tag: "TPB", color: "#14B8A6" },
+  "tpb-games": { tag: "TPB", color: "#14B8A6" },
   "x1337-movies": { tag: "1337", color: "#f6a55c" },
   "x1337-tv": { tag: "1337", color: "#f6a55c" },
   "bittorrented-movies": { tag: "BTD", color: "#84cc16" },

@@ -2,6 +2,7 @@ export type SourceId =
   | "fitgirl"
   | "online-fix"
   | "xatab"
+  | "tpb-games"
   | "yts"
   | "eztv"
   | "nyaa"

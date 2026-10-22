@@ -133,6 +133,13 @@ export const ru: Messages = {
     refreshCover: "Обновить обложку",
     remove: "Убрать из библиотеки",
     close: "Закрыть",
+    import: "Импортировать папки",
+    pickImportTitle: "Папка с установленными играми",
+    imported: "Добавлено игр: {count}",
+    importSkipped: "Пропущено (нет .exe): {names}",
+    installNow: "Установить игру",
+    installing: "Установка…",
+    installed: "Установлено: {name}",
   },
   shell: {
     settings: "Настройки",

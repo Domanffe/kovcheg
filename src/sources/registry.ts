@@ -6,6 +6,7 @@ const LOADERS: Record<SourceId, () => Promise<Source>> = {
   fitgirl: () => import("./fitgirl").then((m) => buildSource("fitgirl", m.search)),
   "online-fix": () => import("./online-fix").then((m) => buildSource("online-fix", m.search)),
   xatab: () => import("./xatab").then((m) => buildSource("xatab", m.search)),
+  "tpb-games": () => import("./piratebay").then((m) => buildSource("tpb-games", m.searchGames)),
   yts: () => import("./yts").then((m) => buildSource("yts", m.search)),
   "tpb-movies": () => import("./piratebay").then((m) => buildSource("tpb-movies", m.searchMovies)),
   "x1337-movies": () => import("./x1337").then((m) => buildSource("x1337-movies", m.searchMovies)),

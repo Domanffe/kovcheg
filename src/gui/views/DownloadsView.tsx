@@ -1,5 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { invoke } from "@tauri-apps/api/core";
 import { Card } from "../components/Card";
+import { useToast } from "../components/Toast";
 import { TorrentProgress } from "../components/TorrentProgress";
 import { truncate } from "../../util/format";
 import { sourceStyle } from "../../sources/style";
@@ -7,6 +9,7 @@ import type { HistoryItem, QueueItem } from "../hooks/useTorrents";
 import { useTorrents } from "../hooks/useTorrents";
 import { useFormat } from "../hooks/useFormat";
 import { useLocale } from "../i18n/LocaleProvider";
+import { format } from "../i18n/locale";
 import {
   BatteryPauseIcon,
   DownloadIcon,
@@ -15,6 +18,8 @@ import {
 } from "../icons";
 import { confirmCancelDownload, confirmClearHistory, confirmRemoveHistory } from "../util/confirm";
 import { useDesktopActions } from "../hooks/useDesktopActions";
+import { errMsg } from "../util/errors";
+import { cleanTitle } from "../util/titles";
 
 function isFailed(it: QueueItem): boolean {
   return it.status === "failed";
@@ -39,6 +44,21 @@ export function DownloadsView() {
   const items = list.downloads;
   const history = list.history;
   const confirm = messages.confirm;
+  const { toast } = useToast();
+  const [installingId, setInstallingId] = useState<string | null>(null);
+
+  const installRepack = async (h: HistoryItem): Promise<void> => {
+    setInstallingId(h.id);
+    try {
+      const title = cleanTitle(h.name);
+      await invoke("library_install", { dir: h.dir, title, installDir: null });
+      toast(format(t("library.installed"), { name: title }), "success");
+    } catch (e) {
+      toast(errMsg(e), "error");
+    } finally {
+      setInstallingId(null);
+    }
+  };
 
   const cancelItem = async (it: QueueItem): Promise<void> => {
     const choice = await confirmCancelDownload(truncate(it.name, 40), confirm);
@@ -189,6 +209,14 @@ export function DownloadsView() {
                       </span>
                     </div>
                     <div className="download-actions">
+                      <button
+                        type="button"
+                        className="btn btn-primary"
+                        disabled={installingId === h.id}
+                        onClick={() => void installRepack(h)}
+                      >
+                        {installingId === h.id ? t("library.installing") : t("library.installNow")}
+                      </button>
                       <button type="button" className="btn btn-ghost" onClick={() => void revealFolder(h.dir)}>
                         {t("downloads.openFolder")}
                       </button>

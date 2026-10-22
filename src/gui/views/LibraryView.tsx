@@ -9,21 +9,11 @@ import { format } from "../i18n/locale";
 import { LibraryIcon, UiIcon } from "../icons";
 import { confirmRemoveGame } from "../util/confirm";
 import { errMsg } from "../util/errors";
+import { cleanTitle } from "../util/titles";
 
 function basename(path: string): string {
   const parts = path.split(/[\\/]/).filter(Boolean);
   return parts[parts.length - 1] ?? path;
-}
-
-/** Strips repack noise such as "[FitGirl Repack]" so the Steam lookup and the card stay readable. */
-function cleanTitle(name: string): string {
-  const stripped = name
-    .replace(/\[[^\]]*\]/g, " ")
-    .replace(/\((?:repack|rip|rus|eng|multi\d*)[^)]*\)/gi, " ")
-    .replace(/[._]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-  return stripped || name;
 }
 
 function initials(title: string): string {
@@ -67,6 +57,28 @@ export function LibraryView() {
     }
   };
 
+  const importFolder = async (): Promise<void> => {
+    try {
+      const picked = await open({
+        directory: true,
+        multiple: false,
+        title: t("library.pickImportTitle"),
+      });
+      if (typeof picked !== "string") return;
+      const report = await lib.importFolder(picked);
+      if (!report) return;
+      toast(format(t("library.imported"), { count: report.added.length }), "success");
+      if (report.skipped.length > 0) {
+        toast(
+          format(t("library.importSkipped"), { names: report.skipped.slice(0, 5).join(", ") }),
+          "info",
+        );
+      }
+    } catch (e) {
+      toast(errMsg(e), "error");
+    }
+  };
+
   const pickExe = async (game: LibraryGame): Promise<void> => {
     try {
       const picked = await open({
@@ -99,6 +111,9 @@ export function LibraryView() {
         </button>
         <button type="button" className="btn btn-secondary" onClick={() => setSheetOpen(true)}>
           {t("library.fromDownloads")}
+        </button>
+        <button type="button" className="btn btn-secondary" onClick={() => void importFolder()}>
+          {t("library.import")}
         </button>
       </div>
 

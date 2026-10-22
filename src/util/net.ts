@@ -1,4 +1,7 @@
-export const USER_AGENT = "torlink (+https://www.npmjs.com/package/torlnk)";
+// A browser UA: several sources (FitGirl behind Cloudflare, nyaa, eztv) answer a bot UA
+// with a challenge or a dropped connection, which surfaced as `fetch failed`.
+export const USER_AGENT =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 
 export type FetchImpl = (url: string, init?: RequestInit) => Promise<Response>;
 export type SleepImpl = (ms: number, signal?: AbortSignal) => Promise<void>;

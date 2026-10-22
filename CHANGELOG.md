@@ -8,6 +8,17 @@
 - **Repack auto-install** — after a download finishes, torlink detects Inno Setup / NSIS installers and installs them silently into the configured games folder; unknown installers are handed to the user instead of guessing flags
 - Covers and Steam app ids from the public Steam store search, cached on disk and refreshable per game
 - Settings: **Install games into** (empty = download folder)
+- **TPB games** source — The Pirate Bay PC-games category with real swarm counts (`apibay.org`, category 401)
+- **Import installed games** — point the library at a folder (e.g. `D:\Games`) and every subfolder with a playable `.exe` becomes a card with its cover
+- **Install from downloads** — a finished download gets an "Install game" button right in the Downloads view, no detour through the library
+
+### Changed
+- The search sidecar honours `HTTPS_PROXY` / `HTTP_PROXY`: on networks that block FitGirl, nyaa or EZTV every such source used to fail while the same URL opened in a browser
+- Source requests use a browser user agent instead of the package UA, which some CDNs answer with a challenge
+- Game-title cleanup strips `[FitGirl Repack]`, `SteamRIP.com` and similar noise out of folder names
+
+### Fixed
+- `detect_exe` no longer mistakes games whose names contain helper words for installers (`CrashoutCrew.exe` was skipped as a "crash" binary)
 
 ## 1.5.3 — 2026-07-11
 

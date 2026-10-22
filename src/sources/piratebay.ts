@@ -6,9 +6,11 @@ const API = "https://apibay.org";
 
 const MOVIE_CATS = new Set([201, 202, 207, 209]);
 const TV_CATS = new Set([205, 208]);
+const GAME_CATS = new Set([400, 401]);
 
 const TOP_MOVIES = `${API}/precompiled/data_top100_207.json`;
 const TOP_TV = `${API}/precompiled/data_top100_208.json`;
+const TOP_GAMES = `${API}/precompiled/data_top100_401.json`;
 
 interface ApibayItem {
   id?: string;
@@ -86,4 +88,8 @@ export async function searchMovies(query: string, opts: SearchOptions = {}): Pro
 
 export async function searchTv(query: string, opts: SearchOptions = {}): Promise<TorrentResult[]> {
   return searchCategory(query, TV_CATS, TOP_TV, "tpb-tv", opts);
+}
+
+export async function searchGames(query: string, opts: SearchOptions = {}): Promise<TorrentResult[]> {
+  return searchCategory(query, GAME_CATS, TOP_GAMES, "tpb-games", opts);
 }

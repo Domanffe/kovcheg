@@ -31,6 +31,11 @@ export interface InstallProgress {
   message: string;
 }
 
+export interface ImportReport {
+  added: LibraryGame[];
+  skipped: string[];
+}
+
 export function useLibrary() {
   const { toast } = useToast();
   const tauri = isTauri();
@@ -82,6 +87,19 @@ export function useLibrary() {
     [run],
   );
 
+  const importFolder = useCallback(
+    async (dir: string): Promise<ImportReport | null> => {
+      if (!tauri) return null;
+      try {
+        return await invoke<ImportReport>("library_import", { dir });
+      } catch (e) {
+        toast(errMsg(e), "error");
+        return null;
+      }
+    },
+    [tauri, toast],
+  );
+
   const remove = useCallback(
     (id: string, deleteFiles: boolean) => run(() => invoke("library_remove", { id, deleteFiles })),
     [run],
@@ -115,5 +133,5 @@ export function useLibrary() {
     [tauri, toast],
   );
 
-  return { games, installing, tauri, launch, add, install, remove, setExe, refreshCover, openFolder, probe };
+  return { games, installing, tauri, launch, add, install, importFolder, remove, setExe, refreshCover, openFolder, probe };
 }

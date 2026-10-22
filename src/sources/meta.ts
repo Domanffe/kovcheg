@@ -13,6 +13,7 @@ export const SOURCE_IDS: readonly SourceId[] = [
   "fitgirl",
   "online-fix",
   "xatab",
+  "tpb-games",
   "yts",
   "tpb-movies",
   "x1337-movies",
@@ -49,6 +50,13 @@ export const SOURCE_META: Record<SourceId, SourceMeta> = {
     group: "Games",
     homepage: "https://byxatab.com",
     reportsHealth: false,
+  },
+  "tpb-games": {
+    id: "tpb-games",
+    label: "TPB",
+    group: "Games",
+    homepage: "https://thepiratebay.org",
+    reportsHealth: true,
   },
   yts: {
     id: "yts",

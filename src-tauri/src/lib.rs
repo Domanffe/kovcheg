@@ -162,6 +162,7 @@ pub fn run() {
             library::library_probe,
             library::library_open_folder,
             library::library_add,
+            library::library_import,
             library::library_set_exe,
             library::library_remove,
             library::library_launch,
