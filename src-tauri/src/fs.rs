@@ -4,7 +4,12 @@ use std::path::Path;
 pub fn replace_file(tmp: &Path, dest: &Path) -> std::io::Result<()> {
     match std::fs::rename(tmp, dest) {
         Ok(()) => Ok(()),
-        Err(err) if matches!(err.kind(), ErrorKind::AlreadyExists | ErrorKind::PermissionDenied) => {
+        Err(err)
+            if matches!(
+                err.kind(),
+                ErrorKind::AlreadyExists | ErrorKind::PermissionDenied
+            ) =>
+        {
             if dest.exists() {
                 std::fs::remove_file(dest)?;
             }
@@ -17,7 +22,12 @@ pub fn replace_file(tmp: &Path, dest: &Path) -> std::io::Result<()> {
 pub fn open_folder(path: &str, download_root: &str) -> std::io::Result<()> {
     let root = crate::path_guard::validate_download_path(path, download_root)
         .map_err(|e| std::io::Error::new(std::io::ErrorKind::PermissionDenied, e))?;
-    let path = root.to_string_lossy().to_string();
+    reveal(root.to_string_lossy().as_ref())
+}
+
+/// Opens any path in the system file manager. Callers must validate the path themselves.
+pub fn reveal(path: &str) -> std::io::Result<()> {
+    let path = path.to_string();
 
     #[cfg(target_os = "windows")]
     {

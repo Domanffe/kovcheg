@@ -6,7 +6,7 @@ import { SplashView } from "./views/SplashView";
 import { markSplashSeen, shouldSkipSplash } from "./util/splash";
 import { isTauri } from "./util/tauri";
 
-export type Section = "all" | "games" | "movies" | "tv" | "anime" | "downloads" | "seeding";
+export type Section = "all" | "games" | "movies" | "tv" | "anime" | "library" | "downloads" | "seeding";
 
 interface PendingLaunch {
   magnet: string;

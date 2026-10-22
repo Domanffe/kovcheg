@@ -62,6 +62,7 @@ export interface TorrentList {
 export interface AppConfig {
   downloadDir: string;
   trackers: string[];
+  installDir?: string;
 }
 
 interface TorrentCtx {

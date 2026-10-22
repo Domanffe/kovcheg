@@ -5157,6 +5157,7 @@ name = "torlink"
 version = "1.5.3"
 dependencies = [
  "anyhow",
+ "base64 0.22.1",
  "directories",
  "librqbit",
  "quinn-proto",

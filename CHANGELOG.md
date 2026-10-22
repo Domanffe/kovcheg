@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### Added
+- **Library** — installed games as a cover grid with playtime, "playing now" and per-game actions (open folder, set `.exe`, refresh cover, remove)
+- Play launches the game executable, watches the process and adds session time to the playtime
+- **Repack auto-install** — after a download finishes, torlink detects Inno Setup / NSIS installers and installs them silently into the configured games folder; unknown installers are handed to the user instead of guessing flags
+- Covers and Steam app ids from the public Steam store search, cached on disk and refreshable per game
+- Settings: **Install games into** (empty = download folder)
+
 ## 1.5.3 — 2026-07-11
 
 ### Fixed

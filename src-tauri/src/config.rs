@@ -12,6 +12,9 @@ pub struct AppConfig {
     pub download_dir: String,
     #[serde(default)]
     pub trackers: Vec<String>,
+    /// Empty means "install next to the downloads".
+    #[serde(default)]
+    pub install_dir: String,
 }
 
 fn default_download_dir() -> String {
@@ -27,10 +30,12 @@ impl Default for AppConfig {
         Self {
             download_dir: default_download_dir(),
             trackers: vec![],
+            install_dir: String::new(),
         }
     }
 }
 
+#[derive(Clone)]
 pub struct Paths {
     pub config_file: PathBuf,
     pub queue_file: PathBuf,

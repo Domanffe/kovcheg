@@ -900,3 +900,155 @@
   text-align: center;
   padding: 2.5rem 1rem;
 }
+
+/* Library */
+.library-toolbar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.library-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+}
+.game-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.game-cover {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-surface);
+  cursor: pointer;
+}
+.game-cover:disabled {
+  cursor: default;
+}
+.game-cover-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.game-cover-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 28px;
+  color: var(--color-text-secondary);
+}
+.game-play {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  color: var(--color-action-primary-text);
+  background: rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  transition: opacity var(--motion-fast);
+}
+.game-cover:hover .game-play,
+.game-cover:focus-visible .game-play {
+  opacity: 1;
+}
+.game-badge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  background: var(--color-state-success);
+  color: var(--color-base-black);
+}
+.game-name {
+  font-size: 13px;
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.game-sub {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+.game-menu-wrap {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+}
+.game-more {
+  width: 26px;
+  height: 26px;
+  font-size: 16px;
+  line-height: 1;
+  background: rgba(0, 0, 0, 0.55);
+}
+.game-menu {
+  position: absolute;
+  top: 30px;
+  right: 0;
+  z-index: 5;
+  min-width: 180px;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow);
+}
+.game-menu button {
+  display: block;
+  width: 100%;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--color-text-primary);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+.game-menu button:hover {
+  background: var(--color-bg-surface);
+}
+.game-menu-danger {
+  color: var(--color-state-error);
+}
+.install-banner {
+  margin: 0 0 12px;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-surface);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+.empty-icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 8px;
+  color: var(--color-text-secondary);
+}
+.empty-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}

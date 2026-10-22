@@ -26,6 +26,7 @@ export function SettingsSheet({
   const { checking, updateVersion, checkForUpdate } = useUpdater(tauri);
   const { toast } = useToast();
   const [downloadDir, setDownloadDir] = useState("");
+  const [installDir, setInstallDir] = useState("");
   const [trackersText, setTrackersText] = useState("");
   const [saving, setSaving] = useState(false);
   const [appVersion, setAppVersion] = useState<string | null>(null);
@@ -33,6 +34,7 @@ export function SettingsSheet({
   useEffect(() => {
     if (!visible || !config) return;
     setDownloadDir(config.downloadDir);
+    setInstallDir(config.installDir ?? "");
     setTrackersText(config.trackers.join("\n"));
   }, [visible, config]);
 
@@ -65,7 +67,7 @@ export function SettingsSheet({
         .split("\n")
         .map((l) => l.trim())
         .filter(Boolean);
-      await invoke("set_config", { config: { downloadDir, trackers } });
+      await invoke("set_config", { config: { downloadDir, trackers, installDir } });
       toast(t("settings.saved"), "success");
       if (config && downloadDir !== config.downloadDir) {
         toast(t("settings.restartForDownloadDir"), "info");
@@ -157,6 +159,40 @@ export function SettingsSheet({
                 spellCheck={false}
               />
               <button type="button" className="btn btn-secondary" onClick={() => void pickFolder()}>
+                {t("settings.browse")}
+              </button>
+            </div>
+          </label>
+
+          <label className="field">
+            <span className="field-label">{t("settings.installFolder")}</span>
+            <span className="field-hint">{t("settings.installFolderHint")}</span>
+            <div className="field-row">
+              <input
+                className="field-input"
+                value={installDir}
+                onChange={(e) => setInstallDir(e.target.value)}
+                placeholder={t("settings.installFolderPlaceholder")}
+                spellCheck={false}
+              />
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() =>
+                  void (async () => {
+                    try {
+                      const picked = await open({
+                        directory: true,
+                        multiple: false,
+                        title: t("settings.installFolder"),
+                      });
+                      if (typeof picked === "string") setInstallDir(picked);
+                    } catch (e) {
+                      toast(errMsg(e), "error");
+                    }
+                  })()
+                }
+              >
                 {t("settings.browse")}
               </button>
             </div>

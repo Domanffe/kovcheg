@@ -29,6 +29,8 @@ Each torrent is saved in its own subfolder inside the download directory (for ex
 
 **Downloads** — pause, resume, retry on failure, cancel with a choice to keep or delete files on disk.
 
+**Library** — games you installed, as a cover grid. Add a folder you already have, or pick a finished download and install it: torlink runs Inno Setup / NSIS repacks silently into your games folder, then shows the game with its cover. Play launches the executable and tracks playtime.
+
 **History** — finished torrents sit under “Recently downloaded”; you can grab them again or clear the list.
 
 **Shortcuts** (when the main view is focused): `/` focus search · `Tab` next section · `d` download · `p` pause · `f` retry · `c` cancel

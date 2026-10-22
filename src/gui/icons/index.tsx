@@ -6,6 +6,7 @@ import DownloadIcon from "./download-icon";
 import GamepadIcon from "./gamepad-icon";
 import GearIcon from "./gear-icon";
 import GlobeIcon from "./globe-icon";
+import LibraryIcon from "./library-icon";
 import MagnifierIcon from "./magnifier-icon";
 import PlayerIcon from "./player-icon";
 import RadioIcon from "./radio-icon";
@@ -34,6 +35,7 @@ export {
   GamepadIcon,
   GearIcon,
   GlobeIcon,
+  LibraryIcon,
   MagnifierIcon,
   PlayerIcon,
   RadioIcon,

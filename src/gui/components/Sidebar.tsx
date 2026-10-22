@@ -4,6 +4,7 @@ import {
   DownloadIcon,
   GamepadIcon,
   GlobeIcon,
+  LibraryIcon,
   PlayerIcon,
   RadioIcon,
   SparklesIcon,
@@ -21,6 +22,7 @@ const FILTERS: { key: Section; labelKey: string; icon: IconComponent }[] = [
 ];
 
 const LIBRARY: { key: Section; labelKey: string; icon: IconComponent }[] = [
+  { key: "library", labelKey: "section.library", icon: LibraryIcon },
   { key: "downloads", labelKey: "section.downloads", icon: DownloadIcon },
   { key: "seeding", labelKey: "section.seeding", icon: UploadIcon },
 ];

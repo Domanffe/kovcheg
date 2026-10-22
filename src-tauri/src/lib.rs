@@ -1,7 +1,8 @@
-mod config;
 mod commands;
+mod config;
 mod fs;
 mod launch;
+mod library;
 mod path_guard;
 mod persistence;
 mod sidecar;
@@ -21,6 +22,7 @@ use torrent::TorrentManager;
 pub struct AppState {
     pub torrents: Arc<Mutex<TorrentManager>>,
     pub search: Mutex<sidecar::SearchSidecar>,
+    pub library: Arc<Mutex<library::Library>>,
     pub(crate) pending_launch: Mutex<Option<launch::PendingLaunch>>,
 }
 
@@ -93,8 +95,7 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
 pub fn run() {
     tracing_subscriber::fmt()
         .with_env_filter(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "info".into()),
+            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()),
         )
         .init();
 
@@ -109,6 +110,10 @@ pub fn run() {
             setup_tray(app)?;
 
             let handle = app.handle().clone();
+            let library = library::Library::boot().map_err(|e| -> Box<dyn std::error::Error> {
+                tracing::error!("failed to load library: {e:#}");
+                format!("failed to load library: {e:#}").into()
+            })?;
             let (search, manager) = tauri::async_runtime::block_on(async {
                 let search = sidecar::ensure_search_sidecar(&handle).await?;
                 let manager = TorrentManager::boot(handle.clone(), search.port()).await?;
@@ -122,6 +127,7 @@ pub fn run() {
             app.manage(AppState {
                 torrents: manager,
                 search: Mutex::new(search),
+                library: Arc::new(Mutex::new(library)),
                 pending_launch: Mutex::new(launch::parse_startup_launch()),
             });
 
@@ -152,6 +158,15 @@ pub fn run() {
             torrent::commands::get_search_port,
             torrent::commands::get_version,
             torrent::commands::take_pending_launch,
+            library::library_list,
+            library::library_probe,
+            library::library_open_folder,
+            library::library_add,
+            library::library_set_exe,
+            library::library_remove,
+            library::library_launch,
+            library::library_refresh_cover,
+            library::library_install,
             commands::open_folder,
         ])
         .build(tauri::generate_context!())

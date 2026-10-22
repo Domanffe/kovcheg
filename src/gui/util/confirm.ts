@@ -44,3 +44,21 @@ export async function confirmRemoveHistory(
   });
   return result === m.yes;
 }
+
+export async function confirmRemoveGame(
+  name: string,
+  m: Messages["confirm"],
+): Promise<"keep" | "delete" | null> {
+  const result = await message(format(m.removeGameMessage, { name }), {
+    title: m.removeGameTitle,
+    kind: "warning",
+    buttons: {
+      yes: m.keepFiles,
+      no: m.deleteFiles,
+      cancel: m.back,
+    },
+  });
+  if (result === m.keepFiles) return "keep";
+  if (result === m.deleteFiles) return "delete";
+  return null;
+}

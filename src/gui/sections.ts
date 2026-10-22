@@ -6,6 +6,7 @@ export const SECTION_ORDER: Section[] = [
   "movies",
   "tv",
   "anime",
+  "library",
   "downloads",
   "seeding",
 ];

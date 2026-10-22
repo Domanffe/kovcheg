@@ -16,6 +16,9 @@ const DownloadsView = lazy(() =>
 const SeedingView = lazy(() =>
   import("../views/SeedingView").then((m) => ({ default: m.SeedingView })),
 );
+const LibraryView = lazy(() =>
+  import("../views/LibraryView").then((m) => ({ default: m.LibraryView })),
+);
 
 export function Shell({
   initialQuery = "",
@@ -83,6 +86,7 @@ export function Shell({
             {SEARCH_SECTIONS.has(section) && (
               <SearchView category={section} initialQuery={initialQuery} />
             )}
+            {section === "library" && <LibraryView />}
             {section === "downloads" && <DownloadsView />}
             {section === "seeding" && <SeedingView />}
           </Suspense>
