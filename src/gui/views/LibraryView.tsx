@@ -38,7 +38,10 @@ function initials(title: string): string {
 function playtimeText(secs: number, locale: string): string {
   const hours = Math.floor(secs / 3600);
   const minutes = Math.round((secs % 3600) / 60);
-  if (hours === 0) return locale === "ru" ? `${minutes} мин` : `${minutes} min`;
+  if (hours === 0) {
+    if (minutes === 0) return locale === "ru" ? "<1 мин" : "<1 min";
+    return locale === "ru" ? `${minutes} мин` : `${minutes} min`;
+  }
   return locale === "ru" ? `${hours} ч ${minutes} мин` : `${hours} h ${minutes} min`;
 }
 

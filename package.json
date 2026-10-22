@@ -76,7 +76,7 @@
     "motion": "^12.42.2",
     "parse-torrent": "^11.0.21",
     "react": "^19.2.8",
-    "react-dom": "^19.2.7"
+    "react-dom": "^19.2.8"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.10.1",

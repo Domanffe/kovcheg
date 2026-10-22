@@ -18,6 +18,8 @@ const COVERS_DIR: &str = "covers";
 const STEAM_SEARCH: &str = "https://store.steampowered.com/api/storesearch/";
 const STEAM_CDN: &str = "https://cdn.akamai.steamstatic.com/steam/apps";
 const SCAN_DEPTH: u8 = 2;
+/// Hard stop so a wrong path (a drive root) cannot turn into an endless directory walk.
+const SCAN_LIMIT: usize = 4000;
 /// Names that never are the game itself.
 const EXE_SKIP: [&str; 11] = [
     "unins",
@@ -113,6 +115,7 @@ struct Stored {
 pub struct Library {
     paths: Paths,
     install_root: PathBuf,
+    download_root: PathBuf,
     games: Vec<Game>,
     running: Vec<Running>,
 }
@@ -127,10 +130,12 @@ impl Library {
         } else {
             PathBuf::from(cfg.install_dir.trim())
         };
+        let download_root = PathBuf::from(&cfg.download_dir);
         let games = load_games(&paths);
         Ok(Self {
             paths,
             install_root,
+            download_root,
             games,
             running: Vec::new(),
         })
@@ -330,6 +335,19 @@ impl Library {
     pub fn install_root(&self) -> &Path {
         &self.install_root
     }
+
+    /// Installers only ever run from folders this app created: a download folder or an
+    /// install target. Pointing the command at `C:\` must not scan or launch anything there.
+    pub fn install_source_allowed(&self, dir: &Path) -> bool {
+        inside(dir, &self.download_root) || inside(dir, &self.install_root)
+    }
+}
+
+fn inside(child: &Path, root: &Path) -> bool {
+    let (Ok(child), Ok(root)) = (child.canonicalize(), root.canonicalize()) else {
+        return false;
+    };
+    child.starts_with(root)
 }
 
 fn load_games(paths: &Paths) -> Vec<Game> {
@@ -422,13 +440,16 @@ fn normalize_words(text: &str) -> Vec<String> {
 }
 
 fn collect_files(dir: &Path, depth: u8, out: &mut Vec<PathBuf>) {
-    if depth > SCAN_DEPTH {
+    if depth > SCAN_DEPTH || out.len() >= SCAN_LIMIT {
         return;
     }
     let Ok(entries) = std::fs::read_dir(dir) else {
         return;
     };
     for entry in entries.flatten() {
+        if out.len() >= SCAN_LIMIT {
+            return;
+        }
         let path = entry.path();
         if path.is_dir() {
             let name = path
@@ -493,29 +514,30 @@ pub fn detect_exe(dir: &Path) -> Option<PathBuf> {
     best.map(|(_, _, path)| path)
 }
 
+/// Only files whose name says "setup/install" count as repack installers; a lone game exe
+/// in a download folder must never be launched as if it were one.
+pub fn looks_like_setup(path: &Path) -> bool {
+    let stem = path
+        .file_stem()
+        .map(|s| s.to_string_lossy().to_lowercase())
+        .unwrap_or_default();
+    (stem.contains("setup") || stem.contains("install")) && !stem.contains("unins")
+}
+
 pub fn find_installer(dir: &Path) -> Option<PathBuf> {
     let mut files = Vec::new();
     collect_files(dir, 0, &mut files);
-    let mut named: Option<(u64, PathBuf)> = None;
-    let mut single: Option<(u64, PathBuf)> = None;
+    let mut best: Option<(u64, PathBuf)> = None;
     for file in files {
-        let stem = file
-            .file_stem()
-            .map(|s| s.to_string_lossy().to_lowercase())
-            .unwrap_or_default();
-        if stem.contains("unins") {
+        if !looks_like_setup(&file) {
             continue;
         }
         let size = file.metadata().map(|m| m.len()).unwrap_or(0);
-        let is_setup = stem.contains("setup") || stem.contains("install");
-        if is_setup && named.as_ref().map(|(s, _)| size > *s).unwrap_or(true) {
-            named = Some((size, file.clone()));
-        }
-        if single.as_ref().map(|(s, _)| size > *s).unwrap_or(true) {
-            single = Some((size, file));
+        if best.as_ref().map(|(s, _)| size > *s).unwrap_or(true) {
+            best = Some((size, file));
         }
     }
-    named.or(single).map(|(_, p)| p)
+    best.map(|(_, p)| p)
 }
 
 fn read_head_tail(path: &Path, window: u64) -> Vec<u8> {
@@ -820,8 +842,16 @@ pub async fn library_install(
     install_dir: Option<String>,
 ) -> Result<String, String> {
     let source = validate_existing_dir(&dir).map_err(|e| e.to_string())?;
+    let lib = state.library.clone();
+    if !lib.lock().await.install_source_allowed(&source) {
+        return Err("installing is only allowed from the download or install folder".into());
+    }
+
     let installer =
         find_installer(&source).ok_or_else(|| "no installer found in this folder".to_string())?;
+    if !looks_like_setup(&installer) {
+        return Err("no setup executable found in this folder".into());
+    }
     let kind = installer_kind(&installer);
     if kind == InstallerKind::Unknown {
         // No documented silent switches: hand the installer to the user instead of guessing.
@@ -839,7 +869,6 @@ pub async fn library_install(
         );
     }
 
-    let lib = state.library.clone();
     let root = match install_dir
         .map(|d| d.trim().to_string())
         .filter(|d| !d.is_empty())
@@ -1058,6 +1087,7 @@ mod tests {
         let mut lib = Library {
             paths: paths.clone(),
             install_root: dir.clone(),
+            download_root: dir.clone(),
             games: Vec::new(),
             running: Vec::new(),
         };
@@ -1071,6 +1101,7 @@ mod tests {
         let reloaded = Library {
             paths: paths.clone(),
             install_root: dir.clone(),
+            download_root: dir.clone(),
             games: load_games(&paths),
             running: Vec::new(),
         };
@@ -1079,6 +1110,48 @@ mod tests {
         assert!(view.last_played_at.is_some());
         assert!(!view.running);
         let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn install_is_refused_outside_download_and_install_roots() {
+        let dir = temp_dir("scope");
+        let paths = Paths {
+            config_file: dir.join("config.json"),
+            queue_file: dir.join("queue.json"),
+            history_file: dir.join("history.json"),
+            seeds_file: dir.join("seeds.json"),
+            torrents_dir: dir.join("torrents"),
+            data_dir: dir.clone(),
+        };
+        let downloads = dir.join("downloads");
+        let installs = dir.join("installs");
+        std::fs::create_dir_all(downloads.join("Some Repack")).unwrap();
+        std::fs::create_dir_all(installs.join("Some Game")).unwrap();
+        std::fs::create_dir_all(dir.join("elsewhere")).unwrap();
+
+        let lib = Library {
+            paths,
+            install_root: installs.clone(),
+            download_root: downloads.clone(),
+            games: Vec::new(),
+            running: Vec::new(),
+        };
+
+        assert!(lib.install_source_allowed(&downloads.join("Some Repack")));
+        assert!(lib.install_source_allowed(&installs.join("Some Game")));
+        assert!(!lib.install_source_allowed(&dir.join("elsewhere")));
+        assert!(!lib.install_source_allowed(Path::new("C:/")));
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn only_setup_like_files_count_as_installers() {
+        assert!(looks_like_setup(Path::new("C:/dl/GAME/setup.exe")));
+        assert!(looks_like_setup(Path::new("C:/dl/GAME/setup-fitgirl.exe")));
+        assert!(looks_like_setup(Path::new("C:/dl/GAME/INSTALL.EXE")));
+        assert!(!looks_like_setup(Path::new("C:/dl/GAME/Game.exe")));
+        assert!(!looks_like_setup(Path::new("C:/dl/GAME/unins000.exe")));
+        assert!(!looks_like_setup(Path::new("C:/dl/GAME/vcredist_x64.exe")));
     }
 
     #[test]
@@ -1095,6 +1168,7 @@ mod tests {
         let mut lib = Library {
             paths,
             install_root: dir.clone(),
+            download_root: dir.clone(),
             games: Vec::new(),
             running: Vec::new(),
         };
