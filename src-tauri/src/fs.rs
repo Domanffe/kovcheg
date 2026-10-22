@@ -54,7 +54,7 @@ mod tests {
     #[test]
     fn replace_file_overwrites_existing_destination() {
         let root = std::env::temp_dir().join(format!(
-            "torlink-replace-file-{}-{}",
+            "kovcheg-replace-file-{}-{}",
             std::process::id(),
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)

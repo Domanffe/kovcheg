@@ -179,7 +179,7 @@ mod tests {
     #[test]
     fn canonical_directory_requires_existing_dir() {
         let root = std::env::temp_dir().join(format!(
-            "torlink-path-guard-{}",
+            "kovcheg-path-guard-{}",
             std::process::id()
         ));
         let _ = fs::remove_dir_all(&root);
@@ -192,7 +192,7 @@ mod tests {
     #[test]
     fn validate_download_path_allows_nested_dir() {
         let root = std::env::temp_dir().join(format!(
-            "torlink-dl-root-{}",
+            "kovcheg-dl-root-{}",
             std::process::id()
         ));
         let nested = root.join("nested");
@@ -224,7 +224,7 @@ mod tests {
     #[test]
     fn validate_download_root_accepts_existing_dir() {
         let root = std::env::temp_dir().join(format!(
-            "torlink-dl-cfg-{}",
+            "kovcheg-dl-cfg-{}",
             std::process::id()
         ));
         let _ = fs::remove_dir_all(&root);
@@ -237,7 +237,7 @@ mod tests {
     #[test]
     fn resolve_torrent_dir_builds_nested_path() {
         let root = std::env::temp_dir().join(format!(
-            "torlink-dl-resolve-{}",
+            "kovcheg-dl-resolve-{}",
             std::process::id()
         ));
         let _ = fs::remove_dir_all(&root);
@@ -251,7 +251,7 @@ mod tests {
     #[test]
     fn resolve_torrent_dir_adds_hash_suffix_on_collision() {
         let root = std::env::temp_dir().join(format!(
-            "torlink-dl-collision-{}",
+            "kovcheg-dl-collision-{}",
             std::process::id()
         ));
         let _ = fs::remove_dir_all(&root);
@@ -267,11 +267,11 @@ mod tests {
     #[test]
     fn validate_download_path_rejects_outside_root() {
         let root = std::env::temp_dir().join(format!(
-            "torlink-dl-root-out-{}",
+            "kovcheg-dl-root-out-{}",
             std::process::id()
         ));
         let outside = std::env::temp_dir().join(format!(
-            "torlink-dl-outside-{}",
+            "kovcheg-dl-outside-{}",
             std::process::id()
         ));
         let _ = fs::remove_dir_all(&root);

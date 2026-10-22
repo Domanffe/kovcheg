@@ -1,0 +1,14 @@
+Kovcheg
+=======
+
+Kovcheg is a derivative work of torlink — https://github.com/baairon/torlink —
+Copyright (c) 2026 bairon.dev, licensed under the MIT License (see LICENSE).
+
+The search side (source adapters, CLI, browser UI) comes from that project.
+Kovcheg adds a desktop client (Tauri 2 + Rust), a game library with covers and
+playtime, and silent installation of repacks.
+
+Modifications Copyright (c) 2026 Alexander (Domanffe).
+
+The name "Kovcheg" and its icon belong to this project. torlink is the name of the
+upstream project and is not used as this application's branding.

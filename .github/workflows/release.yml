@@ -59,10 +59,10 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
         with:
           tagName: ${{ github.ref_name }}
-          releaseName: torlink ${{ github.ref_name }}
+          releaseName: kovcheg ${{ github.ref_name }}
           releaseBody: |
             Desktop installers for Windows, Linux, and macOS.
-            See [CHANGELOG.md](https://github.com/Domanffe/torlink-gui/blob/main/CHANGELOG.md) for release notes.
+            See [CHANGELOG.md](https://github.com/Domanffe/kovcheg/blob/main/CHANGELOG.md) for release notes.
           releaseDraft: false
           prerelease: false
           includeUpdaterJson: true
@@ -79,7 +79,7 @@ jobs:
 
       - name: Sync updater manifest mirror
         run: |
-          curl -fsSL "https://github.com/Domanffe/torlink-gui/releases/download/${{ github.ref_name }}/latest.json" \
+          curl -fsSL "https://github.com/Domanffe/kovcheg/releases/download/${{ github.ref_name }}/latest.json" \
             -o updater/latest.json
 
       - name: Commit updater manifest mirror

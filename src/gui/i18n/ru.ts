@@ -147,7 +147,7 @@ export const ru: Messages = {
     loading: "Загрузка…",
   },
   toast: {
-    desktopRequired: "Загрузки доступны только в десктопном приложении torlink.",
+    desktopRequired: "Загрузки доступны только в десктопном приложении kovcheg.",
     added: "Добавлено: {name}",
     retrying: "Повторная загрузка",
     historyCleared: "История очищена",

@@ -1,6 +1,7 @@
 import type { ComponentType } from "react";
 import type { IconProps } from "./types";
 import BatteryPauseIcon from "./battery-pause-icon";
+import ArkIcon from "./ark-icon";
 import FlameIcon from "./flame-icon";
 import DownloadIcon from "./download-icon";
 import GamepadIcon from "./gamepad-icon";
@@ -29,6 +30,7 @@ export function UiIcon({
 }
 
 export {
+  ArkIcon,
   BatteryPauseIcon,
   FlameIcon,
   DownloadIcon,

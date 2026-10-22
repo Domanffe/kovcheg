@@ -6,7 +6,7 @@ import { runConcurrentSearch, type ConcurrentSearchState } from "../core/search"
 const DEFAULT_PORT = 3847;
 
 function requestedPort(): number {
-  const raw = process.argv[2] ?? process.env.TORLINK_SEARCH_PORT ?? String(DEFAULT_PORT);
+  const raw = process.argv[2] ?? process.env.KOVCHEG_SEARCH_PORT ?? String(DEFAULT_PORT);
   const port = Number(raw);
   return Number.isInteger(port) && port >= 0 ? port : DEFAULT_PORT;
 }

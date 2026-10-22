@@ -19,8 +19,8 @@ pub struct AppConfig {
 
 fn default_download_dir() -> String {
     directories::UserDirs::new()
-        .and_then(|u| u.download_dir().map(|p| p.join("torlink")))
-        .unwrap_or_else(|| PathBuf::from("torlink"))
+        .and_then(|u| u.download_dir().map(|p| p.join("kovcheg")))
+        .unwrap_or_else(|| PathBuf::from("kovcheg"))
         .to_string_lossy()
         .into_owned()
 }
@@ -45,8 +45,62 @@ pub struct Paths {
     pub data_dir: PathBuf,
 }
 
+/// One-time hop from the old torlink identity so an upgrade does not lose the library,
+/// queue or settings. Copies, never moves: a stale torlink folder is harmless.
+fn migrate_legacy_state(new_data: &Path, new_config: &Path) {
+    if std::env::var("KOVCHEG_STATE_DIR").is_ok() || std::env::var("TORLINK_STATE_DIR").is_ok() {
+        return;
+    }
+    if new_data.join("library.json").exists() || new_data.join("queue.json").exists() {
+        return;
+    }
+    let Some(old) = ProjectDirs::from("", "", "torlink") else {
+        return;
+    };
+    let old_data = old.data_dir();
+    if !old_data.is_dir() {
+        return;
+    }
+    let _ = std::fs::create_dir_all(new_data);
+    let _ = std::fs::create_dir_all(new_config);
+    for name in ["library.json", "queue.json", "history.json", "seeds.json"] {
+        let from = old_data.join(name);
+        let to = new_data.join(name);
+        if from.is_file() && !to.exists() {
+            let _ = std::fs::copy(&from, &to);
+        }
+    }
+    for name in ["covers", "torrents"] {
+        let from = old_data.join(name);
+        if from.is_dir() {
+            let _ = copy_dir(&from, &new_data.join(name));
+        }
+    }
+    let old_config = old.config_dir().join("config.json");
+    let new_config_file = new_config.join("config.json");
+    if old_config.is_file() && !new_config_file.exists() {
+        let _ = std::fs::copy(&old_config, &new_config_file);
+    }
+}
+
+fn copy_dir(from: &Path, to: &Path) -> std::io::Result<()> {
+    std::fs::create_dir_all(to)?;
+    for entry in std::fs::read_dir(from)?.flatten() {
+        let path = entry.path();
+        let dest = to.join(entry.file_name());
+        if path.is_dir() {
+            copy_dir(&path, &dest)?;
+        } else if !dest.exists() {
+            std::fs::copy(&path, &dest)?;
+        }
+    }
+    Ok(())
+}
+
 pub fn resolve_paths() -> Paths {
-    if let Ok(override_dir) = std::env::var("TORLINK_STATE_DIR") {
+    if let Ok(override_dir) = std::env::var("KOVCHEG_STATE_DIR")
+        .or_else(|_| std::env::var("TORLINK_STATE_DIR"))
+    {
         let base = PathBuf::from(override_dir);
         let data = base.join("data");
         let config = base.join("config");
@@ -60,9 +114,10 @@ pub fn resolve_paths() -> Paths {
         };
     }
 
-    let proj = ProjectDirs::from("", "", "torlink").expect("project dirs");
+    let proj = ProjectDirs::from("", "", "kovcheg").expect("project dirs");
     let data = proj.data_dir().to_path_buf();
     let config = proj.config_dir().to_path_buf();
+    migrate_legacy_state(&data, &config);
     Paths {
         config_file: config.join("config.json"),
         queue_file: data.join("queue.json"),
@@ -111,7 +166,7 @@ mod tests {
 
     #[test]
     fn load_config_returns_default_for_missing_file() {
-        let dir = std::env::temp_dir().join(format!("torlink-cfg-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("kovcheg-cfg-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();
         let paths = Paths {

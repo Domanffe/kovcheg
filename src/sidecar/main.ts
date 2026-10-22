@@ -21,5 +21,5 @@ if (proxyUrl.trim()) {
 }
 
 // Port 0 = OS-assigned (production sidecar reports actual port on stdout).
-const port = Number(process.env.TORLINK_SEARCH_PORT ?? 0);
+const port = Number(process.env.KOVCHEG_SEARCH_PORT ?? 0);
 void startSearchServer(port);

@@ -1,10 +1,10 @@
 {
-  "name": "torlnk",
-  "version": "1.5.3",
+  "name": "kovcheg",
+  "version": "2.0.0",
   "description": "A sleek torrent finder and downloader with a modern GUI (Tauri + librqbit).",
   "type": "module",
   "bin": {
-    "torlnk": "./dist/cli.cjs"
+    "kovcheg": "./dist/cli.cjs"
   },
   "files": [
     "dist",
@@ -57,11 +57,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Domanffe/torlink-gui.git"
+    "url": "git+https://github.com/Domanffe/kovcheg.git"
   },
-  "homepage": "https://github.com/Domanffe/torlink-gui#readme",
+  "homepage": "https://github.com/Domanffe/kovcheg#readme",
   "bugs": {
-    "url": "https://github.com/Domanffe/torlink-gui/issues"
+    "url": "https://github.com/Domanffe/kovcheg/issues"
   },
   "publishConfig": {
     "access": "public"

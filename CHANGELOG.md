@@ -1,6 +1,23 @@
 # Changelog
 
-## Unreleased
+## 2.0.0 — rebrand to Kovcheg
+
+The app is now **Kovcheg** (ковчег — the chest that keeps everything). Same code base, its own
+name and icon: nothing user-facing, in package names, in the data folder or in updater paths
+refers to `torlink` any more.
+
+### Licensing
+- `LICENSE` keeps the upstream MIT notice (`Copyright (c) 2026 bairon.dev`) and adds
+  `Copyright (c) 2026 Alexander (Domanffe)` for the desktop client and library
+- new `NOTICE` states that Kovcheg is a derivative of `baairon/torlink`
+- "torlink" stays only in attribution and in `docs/upstream.md`
+
+### Rebrand
+- product, bundle, window, tray and package names → `kovcheg`; identifier → `app.kovcheg.desktop`
+- state folder moves to `kovcheg`; on first launch the library, queue, history, seeds, covers
+  and `config.json` are copied once from the old `torlink` folder
+- env vars `TORLINK_STATE_DIR` / `TORLINK_SEARCH_PORT` → `KOVCHEG_*` (the old names are still read)
+- new app icon and wordmark (chest glyph)
 
 ### Added
 - **Library** — installed games as a cover grid with playtime, "playing now" and per-game actions (open folder, set `.exe`, refresh cover, remove)

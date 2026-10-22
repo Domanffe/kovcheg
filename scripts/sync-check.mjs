@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * One-way upstream sync report for torlink-gui.
+ * One-way upstream sync report for kovcheg-gui.
  * Usage: node scripts/sync-check.mjs [--fetch]
  */
 

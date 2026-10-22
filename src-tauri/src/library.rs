@@ -699,7 +699,7 @@ fn best_match<'a>(items: &'a [SteamItem], title: &str) -> Option<&'a SteamItem> 
 /// Finds the Steam app id and caches its portrait cover. Network failures are not fatal.
 async fn fetch_cover(paths: &Paths, id: &str, title: &str) -> anyhow::Result<Option<u32>> {
     let client = reqwest::Client::builder()
-        .user_agent("torlink")
+        .user_agent("kovcheg")
         .timeout(Duration::from_secs(20))
         .build()?;
     let url = format!(
@@ -1118,7 +1118,7 @@ mod tests {
 
     fn temp_dir(name: &str) -> PathBuf {
         let dir = std::env::temp_dir().join(format!(
-            "torlink-lib-{name}-{}-{}",
+            "kovcheg-lib-{name}-{}-{}",
             std::process::id(),
             now_secs()
         ));

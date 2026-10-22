@@ -1,12 +1,12 @@
-# Contributing to torlink
+# Contributing to kovcheg
 
-torlink stays small on purpose. Read the code you're about to touch, match how it already works, and keep your change tight.
+kovcheg stays small on purpose. Read the code you're about to touch, match how it already works, and keep your change tight.
 
 ## Set up
 
 ```sh
-git clone https://github.com/Domanffe/torlink-gui.git
-cd torlink-gui
+git clone https://github.com/Domanffe/kovcheg.git
+cd kovcheg-gui
 npm install
 npm run dev:tauri      # desktop app (recommended)
 npm run dev:stack      # browser GUI + search sidecar only
@@ -27,7 +27,7 @@ Reuse what's there before you write something new. Desktop UI lives in `src/gui/
 
 ### Cross-platform or it doesn't ship
 
-torlink runs on Windows, macOS, and Linux. Desktop shell actions use `src/gui/util/desktop.ts` (Tauri invoke + browser APIs).
+kovcheg runs on Windows, macOS, and Linux. Desktop shell actions use `src/gui/util/desktop.ts` (Tauri invoke + browser APIs).
 
 ### Fail soft, never crash
 
@@ -47,4 +47,4 @@ The desktop GUI is pastel-violet and quiet. Keep new UI restrained and consisten
 - Say why, not just what. The diff already shows the what.
 - One concern per pull request.
 
-Thanks for helping keep torlink sharp.
+Thanks for helping keep kovcheg sharp.

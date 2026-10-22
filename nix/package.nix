@@ -8,16 +8,16 @@
 }:
 
 buildNpmPackage (finalAttrs: {
-  pname = "torlnk";
+  pname = "kovcheg";
   version = "1.5.0";
   __structuredAttrs = true;
   strictDeps = true;
 
   src = fetchFromGitHub {
     owner = "Domanffe";
-    repo = "torlink-gui";
+    repo = "kovcheg-gui";
     tag = "v${finalAttrs.version}";
-    # Update after release: nix-prefetch-url --unpack https://github.com/Domanffe/torlink-gui/archive/v1.5.0.tar.gz
+    # Update after release: nix-prefetch-url --unpack https://github.com/Domanffe/kovcheg/archive/v1.5.0.tar.gz
     hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
   };
 
@@ -32,16 +32,16 @@ buildNpmPackage (finalAttrs: {
   '';
 
   postInstall = ''
-    wrapProgram $out/bin/torlnk \
+    wrapProgram $out/bin/kovcheg \
       --prefix PATH : ${lib.makeBinPath [ wl-clipboard xclip ]}
   '';
 
   meta = {
     description = "Torlink browser search CLI (desktop downloads use the Tauri app)";
-    homepage = "https://github.com/Domanffe/torlink-gui";
-    changelog = "https://github.com/Domanffe/torlink-gui/releases/tag/v${finalAttrs.version}";
+    homepage = "https://github.com/Domanffe/kovcheg";
+    changelog = "https://github.com/Domanffe/kovcheg/releases/tag/v${finalAttrs.version}";
     license = lib.licenses.mit;
-    mainProgram = "torlnk";
+    mainProgram = "kovcheg";
     platforms = lib.platforms.linux;
   };
 })

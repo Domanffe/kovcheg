@@ -61,7 +61,7 @@ export async function runBrowserGui(): Promise<void> {
   });
 
   const url = `http://127.0.0.1:${guiPort}/?searchPort=${search.port}`;
-  process.stdout.write(`torlink GUI: ${url}\n`);
+  process.stdout.write(`kovcheg GUI: ${url}\n`);
   process.stdout.write(`search API: http://127.0.0.1:${search.port}\n`);
   openUrl(url);
   process.stdout.write("Press Ctrl+C to stop.\n");

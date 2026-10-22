@@ -9,7 +9,7 @@ if (cmd.kind === "help") {
 }
 
 if (cmd.kind === "version") {
-  console.log(`torlink v${VERSION}`);
+  console.log(`kovcheg v${VERSION}`);
   process.exit(0);
 }
 
@@ -21,7 +21,7 @@ if (cmd.kind === "invalid") {
 
 if (cmd.kind === "search") {
   const { startSearchServer } = await import("./sidecar/search-server.js");
-  await startSearchServer(Number(process.env.TORLINK_SEARCH_PORT ?? 3847));
+  await startSearchServer(Number(process.env.KOVCHEG_SEARCH_PORT ?? 3847));
   process.stdout.write("Search sidecar running. Press Ctrl+C to stop.\n");
 } else {
   const { runBrowserGui } = await import("./browser-gui.js");

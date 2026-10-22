@@ -176,7 +176,7 @@ mod tests {
 
     #[test]
     fn load_queue_returns_empty_on_corrupt_file() {
-        let dir = std::env::temp_dir().join(format!("torlink-persist-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("kovcheg-persist-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();
         let paths = Paths {
@@ -231,7 +231,7 @@ mod tests {
 
     #[test]
     fn torrent_meta_path_uses_safe_id() {
-        let dir = std::env::temp_dir().join(format!("torlink-meta-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("kovcheg-meta-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();
         let paths = Paths {

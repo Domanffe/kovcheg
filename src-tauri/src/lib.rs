@@ -40,9 +40,9 @@ fn is_russian_locale() -> bool {
 
 fn tray_labels() -> (&'static str, &'static str) {
     if is_russian_locale() {
-        ("Показать torlink", "Выход")
+        ("Показать kovcheg", "Выход")
     } else {
-        ("Show torlink", "Quit")
+        ("Show kovcheg", "Quit")
     }
 }
 
@@ -59,7 +59,7 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
 
     TrayIconBuilder::with_id("main")
         .icon(icon)
-        .tooltip("torlink")
+        .tooltip("kovcheg")
         .menu(&menu)
         .show_menu_on_left_click(false)
         .on_menu_event(|app, event| match event.id.as_ref() {
@@ -120,8 +120,8 @@ pub fn run() {
                 Ok::<_, anyhow::Error>((search, manager))
             })
             .map_err(|e| -> Box<dyn std::error::Error> {
-                tracing::error!("failed to boot torlink: {e:#}");
-                format!("failed to boot torlink: {e:#}").into()
+                tracing::error!("failed to boot kovcheg: {e:#}");
+                format!("failed to boot kovcheg: {e:#}").into()
             })?;
 
             app.manage(AppState {
@@ -171,7 +171,7 @@ pub fn run() {
             commands::open_folder,
         ])
         .build(tauri::generate_context!())
-        .expect("error building torlink")
+        .expect("error building kovcheg")
         .run(|app, event| {
             if matches!(event, RunEvent::Exit) {
                 if let Some(state) = app.try_state::<AppState>() {

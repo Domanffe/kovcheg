@@ -145,7 +145,7 @@ export const en = {
     loading: "Loading…",
   },
   toast: {
-    desktopRequired: "Downloads require the torlink desktop app.",
+    desktopRequired: "Downloads require the kovcheg desktop app.",
     added: "Added: {name}",
     retrying: "Retrying download",
     historyCleared: "History cleared",

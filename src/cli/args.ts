@@ -21,15 +21,15 @@ export function parseCliArgs(argv: string[]): CliCommand {
   return { kind: "invalid", arg: a };
 }
 
-export const HELP_TEXT = `torlink — torrent search & download
+export const HELP_TEXT = `kovcheg — torrent search & download
 
 usage
-  torlnk                      open the browser search UI (or use the desktop app)
-  torlnk --gui                same as default
-  torlnk --search             search API server only (dev)
-  torlnk "magnet:?xt=..."     open the GUI (magnet handling: desktop app)
-  torlnk path/to/file.torrent open the GUI (.torrent handling: desktop app)
-  torlnk --version            print the version
+  kovcheg                      open the browser search UI (or use the desktop app)
+  kovcheg --gui                same as default
+  kovcheg --search             search API server only (dev)
+  kovcheg "magnet:?xt=..."     open the GUI (magnet handling: desktop app)
+  kovcheg path/to/file.torrent open the GUI (.torrent handling: desktop app)
+  kovcheg --version            print the version
 
 desktop app: install from GitHub Releases for full download/seeding (librqbit)
 tip: quote magnet links (they contain & characters)

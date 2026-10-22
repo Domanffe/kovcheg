@@ -5,7 +5,7 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   test: {
     env: {
-      TORLINK_STATE_DIR: path.join(os.tmpdir(), "torlink-test-state"),
+      KOVCHEG_STATE_DIR: path.join(os.tmpdir(), "kovcheg-test-state"),
     },
   },
 });

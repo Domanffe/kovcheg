@@ -1,13 +1,13 @@
 [package]
-name = "torlink"
-version = "1.5.3"
-description = "torlink torrent client"
+name = "kovcheg"
+version = "2.0.0"
+description = "kovcheg torrent client"
 authors = ["Domanffe"]
 edition = "2021"
 publish = false
 
 [lib]
-name = "torlink_lib"
+name = "kovcheg_lib"
 crate-type = ["lib", "cdylib", "staticlib"]
 
 [build-dependencies]

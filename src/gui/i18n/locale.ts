@@ -5,7 +5,7 @@ import { ru } from "./ru";
 export type Locale = "en" | "ru";
 export type LocalePref = "system" | Locale;
 
-export const LOCALE_STORAGE_KEY = "torlink.locale";
+export const LOCALE_STORAGE_KEY = "kovcheg.locale";
 
 const catalogs: Record<Locale, Messages> = { en, ru };
 

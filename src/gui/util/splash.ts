@@ -1,4 +1,4 @@
-const SKIP_SPLASH_KEY = "torlink.skipSplash";
+const SKIP_SPLASH_KEY = "kovcheg.skipSplash";
 
 export function shouldSkipSplash(): boolean {
   try {

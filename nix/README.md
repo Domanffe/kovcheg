@@ -1,10 +1,10 @@
 # Flake install
 
-This flake packages the **browser search CLI** (`torlnk`). Full downloads require the [Torlink-Gui desktop app](https://github.com/Domanffe/torlink-gui/releases).
+This flake packages the **browser search CLI** (`kovcheg`). Full downloads require the [Torlink-Gui desktop app](https://github.com/Domanffe/kovcheg/releases).
 
 ```nix
 inputs = {
-  torlink-gui.url = "github:Domanffe/torlink-gui";
+  kovcheg-gui.url = "github:Domanffe/kovcheg";
 };
 ```
 
@@ -14,7 +14,7 @@ inputs = {
 { pkgs, inputs, ... }:
 {
   home.packages = [
-    inputs.torlink-gui.packages.${pkgs.system}.default
+    inputs.kovcheg-gui.packages.${pkgs.system}.default
   ];
 }
 ```
@@ -25,7 +25,7 @@ inputs = {
 { pkgs, inputs, ... }:
 {
   environment.systemPackages = [
-    inputs.torlink-gui.packages.${pkgs.system}.default
+    inputs.kovcheg-gui.packages.${pkgs.system}.default
   ];
 }
 ```
