@@ -266,7 +266,7 @@ impl TorrentManager {
             // list the queue while torrents are still being re-added.
             let plan = restore_ref.lock().await.restore_plan();
             for (id, source, dir) in plan {
-                let mut g = restore_ref.lock().await;
+                let g = restore_ref.lock().await;
                 g.restore_one(&id, &source, &dir).await;
             }
         });
