@@ -334,7 +334,8 @@ impl Library {
     /// Installers only ever run from folders this app created: a download folder or an
     /// install target. Pointing the command at `C:\` must not scan or launch anything there.
     pub fn install_source_allowed(&self, dir: &Path) -> bool {
-        inside(dir, &self.download_root) || inside(dir, &self.install_root)
+        crate::path_guard::is_inside(dir, &self.download_root)
+            || crate::path_guard::is_inside(dir, &self.install_root)
     }
 }
 

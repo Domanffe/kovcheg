@@ -76,6 +76,15 @@ pub fn validate_download_root(root: &str) -> Result<PathBuf, String> {
     canonical_root(trimmed)
 }
 
+/// True when `child` resolves to `root` itself or sits under it. Canonicalizes both: unreadable
+/// paths are not inside anything.
+pub fn is_inside(child: &Path, root: &Path) -> bool {
+    let (Ok(child), Ok(root)) = (child.canonicalize(), root.canonicalize()) else {
+        return false;
+    };
+    child.starts_with(root)
+}
+
 /// Reject paths containing `..` before filesystem access.
 pub fn reject_parent_components(path: &str) -> Result<(), String> {
     if Path::new(path)

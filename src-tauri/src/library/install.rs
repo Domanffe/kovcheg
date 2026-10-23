@@ -9,13 +9,6 @@ pub enum InstallerKind {
     Unknown,
 }
 
-pub(crate) fn inside(child: &Path, root: &Path) -> bool {
-    let (Ok(child), Ok(root)) = (child.canonicalize(), root.canonicalize()) else {
-        return false;
-    };
-    child.starts_with(root)
-}
-
 pub(crate) fn validate_existing_dir(dir: &str) -> anyhow::Result<PathBuf> {
     let path = PathBuf::from(dir);
     anyhow::ensure!(path.is_absolute(), "path must be absolute");
@@ -23,15 +16,11 @@ pub(crate) fn validate_existing_dir(dir: &str) -> anyhow::Result<PathBuf> {
     Ok(path)
 }
 
-/// Rejects drive roots and `..` segments: used before creating or deleting directories.
+/// Rejects drive roots, `..` segments and relative paths: used before creating or deleting directories.
 pub(crate) fn validate_target(target: &Path) -> anyhow::Result<()> {
     anyhow::ensure!(target.is_absolute(), "path must be absolute");
-    anyhow::ensure!(
-        !target
-            .components()
-            .any(|c| matches!(c, Component::ParentDir)),
-        "path must not contain .."
-    );
+    crate::path_guard::reject_parent_components(&target.to_string_lossy())
+        .map_err(anyhow::Error::msg)?;
     let depth = target
         .components()
         .filter(|c| matches!(c, Component::Normal(_)))
