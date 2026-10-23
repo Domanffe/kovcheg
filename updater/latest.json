@@ -1,43 +1,43 @@
 {
-  "version": "1.5.3",
-  "notes": "Desktop installers for Windows, Linux, and macOS.\nSee [CHANGELOG.md](https://github.com/Domanffe/torlink-gui/blob/main/CHANGELOG.md) for release notes.",
-  "pub_date": "2026-07-11T20:09:06.525Z",
+  "version": "2.0.0",
+  "notes": "Desktop installers for Windows, Linux, and macOS.\nSee [CHANGELOG.md](https://github.com/Domanffe/kovcheg/blob/main/CHANGELOG.md) for release notes.",
+  "pub_date": "2026-10-23T23:49:11.741Z",
   "platforms": {
-    "darwin-aarch64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRcWhIWmx5dXNXSHlvSWphd0FUWlVaZUtnUVM4R3ZwckJEbFNzTXpVd2N1dWYwRGZpYS8xQm9iTENOTkhYSms3Rlh4d3A4M2RraW1mTTRQT2lrZDg4T0xjemlJV3g0NUFZPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzgzODAwMjAyCWZpbGU6dG9ybGluay5hcHAudGFyLmd6CjF3Uis1TEZyRkxyemVmL2JQQnRsb1dJOHk4clNteVBhZElESjVBWnVreVVIWEQ5VWxpSnU1ekk0ZE5zZ2F5YVhvQlNmbHl3Z0JldkpxbW1UQTlDSkNBPT0K",
-      "url": "https://github.com/Domanffe/torlink-gui/releases/download/v1.5.3/torlink_aarch64.app.tar.gz"
-    },
-    "darwin-aarch64-app": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRcWhIWmx5dXNXSHlvSWphd0FUWlVaZUtnUVM4R3ZwckJEbFNzTXpVd2N1dWYwRGZpYS8xQm9iTENOTkhYSms3Rlh4d3A4M2RraW1mTTRQT2lrZDg4T0xjemlJV3g0NUFZPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzgzODAwMjAyCWZpbGU6dG9ybGluay5hcHAudGFyLmd6CjF3Uis1TEZyRkxyemVmL2JQQnRsb1dJOHk4clNteVBhZElESjVBWnVreVVIWEQ5VWxpSnU1ekk0ZE5zZ2F5YVhvQlNmbHl3Z0JldkpxbW1UQTlDSkNBPT0K",
-      "url": "https://github.com/Domanffe/torlink-gui/releases/download/v1.5.3/torlink_aarch64.app.tar.gz"
-    },
-    "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRcWhIWmx5dXNXSHlrdlY5cWpvV1NtUDR6L2NzM01vM3hIYmI2QThTNzRQdHpQSzNhQW02U0NWc1gyVU5iT3Zxa1dsWWxQWmxiVU80eWhPYTBqZXZVWElYODJ6WlFPRmdrPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzgzODAwNTA5CWZpbGU6dG9ybGlua18xLjUuM194NjQtc2V0dXAuZXhlCmcvYmJGYUF2YzJmOGp1eGI5aCtkemhqZXhwSW9rVGdNTHM2OFVvVys2Wm1aRWpoY2lMb2hCRnRXZFMwVG5VRG1GSk5NOU9SZnBxVTI3clRPcVZESUNRPT0K",
-      "url": "https://github.com/Domanffe/torlink-gui/releases/download/v1.5.3/torlink_1.5.3_x64-setup.exe"
-    },
-    "windows-x86_64-nsis": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRcWhIWmx5dXNXSHlrdlY5cWpvV1NtUDR6L2NzM01vM3hIYmI2QThTNzRQdHpQSzNhQW02U0NWc1gyVU5iT3Zxa1dsWWxQWmxiVU80eWhPYTBqZXZVWElYODJ6WlFPRmdrPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzgzODAwNTA5CWZpbGU6dG9ybGlua18xLjUuM194NjQtc2V0dXAuZXhlCmcvYmJGYUF2YzJmOGp1eGI5aCtkemhqZXhwSW9rVGdNTHM2OFVvVys2Wm1aRWpoY2lMb2hCRnRXZFMwVG5VRG1GSk5NOU9SZnBxVTI3clRPcVZESUNRPT0K",
-      "url": "https://github.com/Domanffe/torlink-gui/releases/download/v1.5.3/torlink_1.5.3_x64-setup.exe"
-    },
-    "windows-x86_64-msi": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRcWhIWmx5dXNXSDdnMk02dnF3N1pnUVlWeklDZnIwL0IrSi9veVlzcEdoZHd3NGhxMnN6S1QycDZPbUFCdjdCZ3JHWC9JSFRGWkRtRU9JdEthcnU2T1JlRDg3UWNkWUFBPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzgzODAwNTA5CWZpbGU6dG9ybGlua18xLjUuM194NjRfZW4tVVMubXNpCklhSEY0cFY4c014OFdmM0ROTmhqU2pOWmoxTncwOVUrZUZVYUxlSHdDVG54UW9oTmNnN1NDQ1R4ckZvRCtibkVqTTRhcTdCOGJkN1hjbmVzbkNvNkJRPT0K",
-      "url": "https://github.com/Domanffe/torlink-gui/releases/download/v1.5.3/torlink_1.5.3_x64_en-US.msi"
-    },
     "linux-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRcWhIWmx5dXNXSDZSQk5LcVpHUiswTi9oMDZFVTdNSGwraTYzV3Z6endHZFNYajhKcDhpaVNYc012NWlKZjlYYXVWdEtPbWF1aWZ0Z3JjU2hpQllGMyt0Rkg4Rm5iSkFJPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzgzODAwNTM4CWZpbGU6dG9ybGlua18xLjUuM19hbWQ2NC5BcHBJbWFnZQpiMW8xRmV1RytWVzlUdFZVM2tDUG1yOGxFNktZOWc1aEMwa05sZEdpcFEvaDJXelhuNUdjVlJ3SGVCRGxMY2ltcDAvb1RFd2FwNXZ6UnhReG5oTlBCdz09Cg==",
-      "url": "https://github.com/Domanffe/torlink-gui/releases/download/v1.5.3/torlink_1.5.3_amd64.AppImage"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRcWhIWmx5dXNXSCtob0RzNlFsZVp3NHJMN1hYWTJkYVY0TUt0aHZnQTV5SVlBZTU0MlhjaG1Yd2dKdzd1YXJic1dLOFZDYy9Eandoc1J3MkRNRmNrQ0tFTFN4V2d5T1E0PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyNzk4OTg0CWZpbGU6a292Y2hlZ18yLjAuMF9hbWQ2NC5BcHBJbWFnZQp3MGZBd2NpTW1kZnYzTjNCN1hnS0MydDFkS2theGs5TUx2dHBseXI1NXQwOUtlVGwzTkhYSVE1cThEd2tTZGpsbXQ1TzFFMFV3KzA5WnB2dWV4S1NEdz09Cg==",
+      "url": "https://github.com/Domanffe/kovcheg/releases/download/v2.0.0/kovcheg_2.0.0_amd64.AppImage"
     },
     "linux-x86_64-appimage": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRcWhIWmx5dXNXSDZSQk5LcVpHUiswTi9oMDZFVTdNSGwraTYzV3Z6endHZFNYajhKcDhpaVNYc012NWlKZjlYYXVWdEtPbWF1aWZ0Z3JjU2hpQllGMyt0Rkg4Rm5iSkFJPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzgzODAwNTM4CWZpbGU6dG9ybGlua18xLjUuM19hbWQ2NC5BcHBJbWFnZQpiMW8xRmV1RytWVzlUdFZVM2tDUG1yOGxFNktZOWc1aEMwa05sZEdpcFEvaDJXelhuNUdjVlJ3SGVCRGxMY2ltcDAvb1RFd2FwNXZ6UnhReG5oTlBCdz09Cg==",
-      "url": "https://github.com/Domanffe/torlink-gui/releases/download/v1.5.3/torlink_1.5.3_amd64.AppImage"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRcWhIWmx5dXNXSCtob0RzNlFsZVp3NHJMN1hYWTJkYVY0TUt0aHZnQTV5SVlBZTU0MlhjaG1Yd2dKdzd1YXJic1dLOFZDYy9Eandoc1J3MkRNRmNrQ0tFTFN4V2d5T1E0PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyNzk4OTg0CWZpbGU6a292Y2hlZ18yLjAuMF9hbWQ2NC5BcHBJbWFnZQp3MGZBd2NpTW1kZnYzTjNCN1hnS0MydDFkS2theGs5TUx2dHBseXI1NXQwOUtlVGwzTkhYSVE1cThEd2tTZGpsbXQ1TzFFMFV3KzA5WnB2dWV4S1NEdz09Cg==",
+      "url": "https://github.com/Domanffe/kovcheg/releases/download/v2.0.0/kovcheg_2.0.0_amd64.AppImage"
     },
     "linux-x86_64-deb": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRcWhIWmx5dXNXSHk1bHl5dkJCd1VoTHlFYjk1MnBRSWJKYUR3WVFwcDQyam9JeE5Od0t5Tjlsbk1ubS90cDQvSDBOWXBzZTVzU3hJU2drS1VaUk1PdVRWWGFUTkFRTUFjPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzgzODAwNTM4CWZpbGU6dG9ybGlua18xLjUuM19hbWQ2NC5kZWIKeGVRNExQSFIrc3ZNWnJiU09IWUJMQXFvY2hUVmpmVEFobW9MRVpiWHF5cDdkUFY2Unl2ZE1YcVE5ajl6c1lDdFJPMXJ2UjdRWkdUcDFKaWE2S21PQmc9PQo=",
-      "url": "https://github.com/Domanffe/torlink-gui/releases/download/v1.5.3/torlink_1.5.3_amd64.deb"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRcWhIWmx5dXNXSDRLYnFZeUdBOHFtVElOUW0xU0hmLzhuNDFEa0Y1NTVYbmZVd09FSlB1K1A3WnprTXlqSVZQNHRxU203WnVlOGsrSXVSbzBNbDIzNEZLbUtiTGtlQncwPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyNzk4OTg0CWZpbGU6a292Y2hlZ18yLjAuMF9hbWQ2NC5kZWIKSy9hSE5FaHdycm9UMFZCMGZvQUFXN29hUXI2OXFBQ2ZXVy9lRTdBeitjeVdXNEVFak5TSzdKQ0hFTlNRQ0RibGtjckw2RlE0bkpTREJPeVBrLzlqRHc9PQo=",
+      "url": "https://github.com/Domanffe/kovcheg/releases/download/v2.0.0/kovcheg_2.0.0_amd64.deb"
     },
     "linux-x86_64-rpm": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRcWhIWmx5dXNXSDI2WWJ5VVRKc0UyeWhtQzJkbGE1WGFLNFJ1MzU4TFhUWTNjb1puZzZpTUtKaFhXdUYxd3pqRnlseFBDMThTS0FMMGtlQXQzK0hIRkpSQUU0QnZtZWdFPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzgzODAwNTM4CWZpbGU6dG9ybGluay0xLjUuMy0xLng4Nl82NC5ycG0KOCtlY1dwQ21RclVKRURDczZXUmZGeFVNaGg5a1VvZUgvaXk0dFBsVmtZZXVqWmsxb3kzSzlwY1JpS1JTN0FZMGRpVW92OHJXL1lIVHJwKzVMTW8xQWc9PQo=",
-      "url": "https://github.com/Domanffe/torlink-gui/releases/download/v1.5.3/torlink-1.5.3-1.x86_64.rpm"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRcWhIWmx5dXNXSHcySzhFak9qTTdNVW9FTndVaE1IN1FBaTFXSDhDdkRkWHFzWjhzSStCMGdBYnVnWllWMGEyenh0bnZ6SmYrTGJ5ZzRzK3lIaCt3SmtJK0hoTlpsMkFNPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyNzk4OTg0CWZpbGU6a292Y2hlZy0yLjAuMC0xLng4Nl82NC5ycG0KU2xSRmhyWGRKTy9yN0pRUW1YYXgveXk4VHFUbUZTaStaSTdOWUJBbkJ4UVZhdXEzL3NYcGZKclVVWkVhSWROdHpIK0QxRnBQRzRhdXBWOHlVTHkxREE9PQo=",
+      "url": "https://github.com/Domanffe/kovcheg/releases/download/v2.0.0/kovcheg-2.0.0-1.x86_64.rpm"
+    },
+    "darwin-aarch64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRcWhIWmx5dXNXSHhXT2pEWU04Sm82blF5cWZqbUozZlhETE92YzNYNFVsSUpNRUREMkhsZUtSYW1Kd281T3lFS21BNk5iSjZMajloU1BNS3VHeG01cUZZSHFhcnRES1FJPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyNzk5MDQ4CWZpbGU6a292Y2hlZy5hcHAudGFyLmd6CmpQTjBEUExldkdaZGx1MnhQNzhYSGxtMVhNZUlxYS9GSisrSmNKUWF3LzVUUmw4b3JOSFV5czM1cVN4WFBqZ2h5dGVJTkZDL1lkSGwzZ0RCRnM4SUJnPT0K",
+      "url": "https://github.com/Domanffe/kovcheg/releases/download/v2.0.0/kovcheg_aarch64.app.tar.gz"
+    },
+    "darwin-aarch64-app": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRcWhIWmx5dXNXSHhXT2pEWU04Sm82blF5cWZqbUozZlhETE92YzNYNFVsSUpNRUREMkhsZUtSYW1Kd281T3lFS21BNk5iSjZMajloU1BNS3VHeG01cUZZSHFhcnRES1FJPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyNzk5MDQ4CWZpbGU6a292Y2hlZy5hcHAudGFyLmd6CmpQTjBEUExldkdaZGx1MnhQNzhYSGxtMVhNZUlxYS9GSisrSmNKUWF3LzVUUmw4b3JOSFV5czM1cVN4WFBqZ2h5dGVJTkZDL1lkSGwzZ0RCRnM4SUJnPT0K",
+      "url": "https://github.com/Domanffe/kovcheg/releases/download/v2.0.0/kovcheg_aarch64.app.tar.gz"
+    },
+    "windows-x86_64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRcWhIWmx5dXNXSDllaWZETW5WRE40eTYwa1k0enZFblhzZVNsdHRFTHYyQUlKQ2FxNzJCRktESWgyQlgvckllT0I3UjJ2R3hEWmhFdXZMSjk1bHdoUHU4RytONHlQbmdrPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyNzk5MzQ2CWZpbGU6a292Y2hlZ18yLjAuMF94NjQtc2V0dXAuZXhlCmtQTzAwV0dJaW4xZUdINm5WNUF1UnM1L0NVN0RYV2JISi9qMEpYbnhKQit5aGdzaHdGS1hHSkhYazRQUkR1bnBNcCtYN1NCZTdyckdUb3ByY3VicEF3PT0K",
+      "url": "https://github.com/Domanffe/kovcheg/releases/download/v2.0.0/kovcheg_2.0.0_x64-setup.exe"
+    },
+    "windows-x86_64-nsis": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRcWhIWmx5dXNXSDllaWZETW5WRE40eTYwa1k0enZFblhzZVNsdHRFTHYyQUlKQ2FxNzJCRktESWgyQlgvckllT0I3UjJ2R3hEWmhFdXZMSjk1bHdoUHU4RytONHlQbmdrPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyNzk5MzQ2CWZpbGU6a292Y2hlZ18yLjAuMF94NjQtc2V0dXAuZXhlCmtQTzAwV0dJaW4xZUdINm5WNUF1UnM1L0NVN0RYV2JISi9qMEpYbnhKQit5aGdzaHdGS1hHSkhYazRQUkR1bnBNcCtYN1NCZTdyckdUb3ByY3VicEF3PT0K",
+      "url": "https://github.com/Domanffe/kovcheg/releases/download/v2.0.0/kovcheg_2.0.0_x64-setup.exe"
+    },
+    "windows-x86_64-msi": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRcWhIWmx5dXNXSDkvbFVtbytIMER0N1UwVUZMNXBZeVllR0dMT0JEai9aUE5naldHeTFmTmNxSXJtNk8rbVQwMllicUlROFByNWlzL2VCYWd2eTZoOW4wOGVxTExEWHcwPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyNzk5MzQ2CWZpbGU6a292Y2hlZ18yLjAuMF94NjRfZW4tVVMubXNpCnVyNEJUZGFXV25TUTVpcG5XcDNsWEVYZTlRaGsxSS9vbllyam5QVG5NaDJPaFhzdjJRRVlUUmNYcHNUb09XN3BlR1Fpa3R2bStJNjd5TWp2Q3dJakFnPT0K",
+      "url": "https://github.com/Domanffe/kovcheg/releases/download/v2.0.0/kovcheg_2.0.0_x64_en-US.msi"
     }
   }
 }
