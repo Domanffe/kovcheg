@@ -4,7 +4,7 @@ use std::time::Duration;
 
 use anyhow::{anyhow, Context};
 use tauri::AppHandle;
-use tauri_plugin_shell::process::{CommandChild, CommandEvent};
+use tauri_plugin_shell::process::{Command, CommandChild, CommandEvent};
 use tauri_plugin_shell::ShellExt;
 use tracing::{info, warn};
 
@@ -63,6 +63,18 @@ fn proxy_for_sidecar(config: &crate::config::AppConfig) -> Option<String> {
     (!proxy.is_empty()).then(|| proxy.to_string())
 }
 
+/// Env the sidecar needs: our pid so it can exit when we die, and the proxy when one is set.
+fn apply_sidecar_env(command: Command) -> Command {
+    let command = command.env("KOVCHEG_PARENT_PID", std::process::id().to_string());
+    match config_proxy() {
+        Some(proxy) => {
+            info!("search sidecar uses the configured proxy");
+            command.env("KOVCHEG_PROXY", proxy)
+        }
+        None => command,
+    }
+}
+
 async fn spawn_bundled_sidecar(app: &AppHandle) -> anyhow::Result<SearchSidecar> {
     let sidecar = app
         .shell()
@@ -70,13 +82,7 @@ async fn spawn_bundled_sidecar(app: &AppHandle) -> anyhow::Result<SearchSidecar>
         .context("search-sidecar binary not bundled (run npm run build:sidecar:bin)")?
         .args(["0"]);
 
-    let sidecar = match config_proxy() {
-        Some(proxy) => {
-            info!("search sidecar uses the configured proxy");
-            sidecar.env("KOVCHEG_PROXY", proxy)
-        }
-        None => sidecar,
-    };
+    let sidecar = apply_sidecar_env(sidecar);
 
     let (mut rx, child) = sidecar
         .spawn()
@@ -155,10 +161,7 @@ async fn spawn_node_fallback(app: &AppHandle) -> anyhow::Result<SearchSidecar> {
         .command("node")
         .args([js.to_string_lossy().to_string(), "0".to_string()]);
 
-    let command = match config_proxy() {
-        Some(proxy) => command.env("KOVCHEG_PROXY", proxy),
-        None => command,
-    };
+    let command = apply_sidecar_env(command);
 
     let (mut rx, child) = command.spawn().context("failed to spawn node sidecar")?;
 

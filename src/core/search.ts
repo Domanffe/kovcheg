@@ -36,6 +36,27 @@ export interface SearchCallbacks {
 }
 
 const RESULT_FLUSH_MS = 150;
+/** A source that never answers must not keep the whole search in "loading" forever. */
+const SOURCE_DEADLINE_MS = 25_000;
+
+async function withDeadline<T>(label: string, work: Promise<T>): Promise<T> {
+  // The loser of the race must not become an unhandled rejection.
+  work.catch(() => {});
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      work,
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(
+          () => reject(new Error(`${label} did not answer within ${SOURCE_DEADLINE_MS / 1000} s`)),
+          SOURCE_DEADLINE_MS,
+        );
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
 
 /** Run concurrent search across all sources; calls onUpdate as results stream in. */
 export async function runConcurrentSearch(
@@ -81,7 +102,7 @@ export async function runConcurrentSearch(
   await Promise.all(
     sources.map(async (source) => {
       try {
-        const res = await cachedSearch(source, query, { signal });
+        const res = await withDeadline(source.id, cachedSearch(source, query, { signal }));
         if (signal?.aborted) return;
         collected.push(...res);
         per[source.id] = { loading: false, error: null, code: null, count: res.length };

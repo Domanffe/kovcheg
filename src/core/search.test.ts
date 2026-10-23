@@ -103,4 +103,35 @@ describe("runConcurrentSearch", () => {
     const last = updates.at(-1) as { perSource: Record<string, { error: string | null }> };
     expect(last.perSource.yts?.error).toBe("offline");
   });
+
+  it("gives up on a source that never answers", async () => {
+    vi.useFakeTimers();
+    try {
+      mockLoad.mockResolvedValue([mockSource("yts"), mockSource("eztv")]);
+      mockCached.mockImplementation((source) =>
+        source.id === "yts"
+          ? Promise.resolve([base("aaa", 3)])
+          : new Promise(() => {}), // never settles
+      );
+
+      const updates: unknown[] = [];
+      const run = runConcurrentSearch("hang", { onUpdate: (s) => updates.push(s) });
+      await vi.advanceTimersByTimeAsync(30_000);
+      await run;
+
+      const last = updates.at(-1) as {
+        loading: boolean;
+        done: number;
+        perSource: Record<string, { error: string | null; loading: boolean }>;
+        results: TorrentResult[];
+      };
+      expect(last.loading).toBe(false);
+      expect(last.done).toBe(2);
+      expect(last.perSource.eztv?.loading).toBe(false);
+      expect(last.perSource.eztv?.error).toMatch(/did not answer/);
+      expect(last.results).toHaveLength(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

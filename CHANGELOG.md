@@ -36,6 +36,15 @@ refers to `torlink` any more.
 
 ### Fixed
 - `detect_exe` no longer mistakes games whose names contain helper words for installers (`CrashoutCrew.exe` was skipped as a "crash" binary)
+- **Search no longer hangs**: a source that never answers is cut off after 25 s and marked `timeout`, instead of leaving the whole search in "searching" forever
+- **"Delete files" is honest**: the files are deleted first and a failure keeps the torrent in the queue with an error, instead of forgetting the entry and reporting success
+- **Library removal cannot take the whole collection**: a folder that contains other library games is refused, and the entry disappears only after the files are actually gone
+- Startup no longer blocks the UI on restoring torrents: the plan is read under the lock and applied outside it
+- Importing a folder looks covers up three at a time instead of firing one request per game
+- A repack installer that waits for input gives up after 45 minutes with a clear message
+- Progress stays below 100 % until the torrent is actually finished
+- An orphaned search sidecar exits when its parent process is gone
+- The UI is only refreshed when something actually changed; the queue is written on status changes instead of twice a second
 
 ## 1.5.3 — 2026-07-11
 

@@ -18,6 +18,8 @@ const COVERS_DIR: &str = "covers";
 const STEAM_SEARCH: &str = "https://store.steampowered.com/api/storesearch/";
 const STEAM_CDN: &str = "https://cdn.akamai.steamstatic.com/steam/apps";
 const SCAN_DEPTH: u8 = 2;
+/// An installer that is still running after this long is waiting for a prompt, not working.
+const INSTALL_TIMEOUT_SECS: u64 = 45 * 60;
 /// Hard stop so a wrong path (a drive root) cannot turn into an endless directory walk.
 const SCAN_LIMIT: usize = 4000;
 /// Helper binaries that sit next to a game but are never it. Matched as substrings on the
@@ -250,16 +252,37 @@ impl Library {
             .iter()
             .position(|g| g.id == id)
             .ok_or_else(|| anyhow::anyhow!("game not found"))?;
-        let game = self.games.remove(pos);
-        self.running.retain(|r| r.id != id);
+        let game = self.games[pos].clone();
         if delete_files {
             let dir = PathBuf::from(&game.dir);
             validate_target(&dir)?;
             anyhow::ensure!(dir != self.paths.data_dir, "refusing to delete app data");
+            // A folder that holds other games is a container added by mistake: deleting it
+            // would take the whole collection with it.
+            let canon = dir.canonicalize().unwrap_or_else(|_| dir.clone());
+            let nested: Vec<String> = self
+                .games
+                .iter()
+                .filter(|g| g.id != id)
+                .filter(|g| {
+                    Path::new(&g.dir)
+                        .canonicalize()
+                        .unwrap_or_else(|_| PathBuf::from(&g.dir))
+                        .starts_with(&canon)
+                })
+                .map(|g| g.title.clone())
+                .collect();
+            anyhow::ensure!(
+                nested.is_empty(),
+                "this folder contains other games ({}); remove them first",
+                nested.join(", ")
+            );
             if dir.is_dir() {
                 std::fs::remove_dir_all(&dir)?;
             }
         }
+        self.games.remove(pos);
+        self.running.retain(|r| r.id != id);
         self.save()?;
         let _ = std::fs::remove_file(self.cover_file(id));
         Ok(())
@@ -888,8 +911,36 @@ pub async fn library_import(
             .collect();
     }
 
-    for (id, title) in added_ids {
-        spawn_cover_lookup(app.clone(), lib.clone(), paths.clone(), id, title);
+    if !added_ids.is_empty() {
+        // Three at a time: importing a whole games folder must not fire fifty parallel
+        // requests at the Steam store and collect 429s.
+        let lookup_app = app.clone();
+        let lookup_lib = lib.clone();
+        tauri::async_runtime::spawn(async move {
+            for chunk in added_ids.chunks(3) {
+                let mut tasks = Vec::new();
+                for (id, title) in chunk {
+                    let (task_app, task_lib, task_paths) =
+                        (lookup_app.clone(), lookup_lib.clone(), paths.clone());
+                    let (id, title) = (id.clone(), title.clone());
+                    tasks.push(tauri::async_runtime::spawn(async move {
+                        match fetch_cover(&task_paths, &id, &title).await {
+                            Ok(Some(app_id)) => {
+                                task_lib.lock().await.set_steam_app_id(&id, app_id);
+                            }
+                            Ok(None) => tracing::info!(title = %title, "no steam match for cover"),
+                            Err(e) => tracing::warn!(title = %title, "cover lookup failed: {e:#}"),
+                        }
+                        task_app
+                    }));
+                }
+                for task in tasks {
+                    let _ = task.await;
+                }
+                tokio::time::sleep(Duration::from_millis(400)).await;
+            }
+            broadcast(&lookup_app, &lookup_lib).await;
+        });
     }
     broadcast(&app, &lib).await;
     Ok(report)
@@ -1049,7 +1100,7 @@ pub async fn library_install(
 
     let installer_clone = installer.clone();
     let source_clone = source.clone();
-    let status = tauri::async_runtime::spawn_blocking(move || {
+    let wait = tauri::async_runtime::spawn_blocking(move || {
         let mut cmd = Command::new(&installer_clone);
         cmd.current_dir(&source_clone).args(&args);
         #[cfg(windows)]
@@ -1058,10 +1109,25 @@ pub async fn library_install(
             cmd.creation_flags(0x0800_0000);
         }
         cmd.status()
-    })
-    .await
-    .map_err(|e| e.to_string())?
-    .map_err(|e| e.to_string())?;
+    });
+    // An installer that waits for a hidden prompt never returns; do not hang the command forever.
+    let status = match tokio::time::timeout(Duration::from_secs(INSTALL_TIMEOUT_SECS), wait).await {
+        Ok(joined) => joined
+            .map_err(|e| e.to_string())?
+            .map_err(|e| e.to_string())?,
+        Err(_) => {
+            emit_progress(
+                &app,
+                &title,
+                "failed",
+                "The installer is still running after 45 minutes".into(),
+            );
+            return Err(
+                "the installer did not finish in 45 minutes — it is probably waiting for input"
+                    .into(),
+            );
+        }
+    };
 
     if !status.success() {
         emit_progress(
@@ -1355,6 +1421,67 @@ mod tests {
         assert_eq!(clean_title("I-Am-Cat-SteamRIP.com"), "I Am Cat");
         assert_eq!(clean_title("Game.Name.v1.2-OFME"), "Game Name v1 2 OFME");
         assert_eq!(clean_title("Plain Game"), "Plain Game");
+    }
+
+    #[test]
+    fn remove_refuses_a_folder_that_holds_other_games() {
+        let dir = temp_dir("nested");
+        let paths = Paths {
+            config_file: dir.join("config.json"),
+            queue_file: dir.join("queue.json"),
+            history_file: dir.join("history.json"),
+            seeds_file: dir.join("seeds.json"),
+            torrents_dir: dir.join("torrents"),
+            data_dir: dir.clone(),
+        };
+        let parent = dir.join("Games");
+        let child = parent.join("Game A");
+        std::fs::create_dir_all(&child).unwrap();
+        let mut lib = Library {
+            paths,
+            install_root: dir.clone(),
+            download_root: dir.clone(),
+            games: Vec::new(),
+            running: Vec::new(),
+        };
+        let container = lib.add("Games".into(), &parent, None, None).unwrap();
+        lib.add("Game A".into(), &child, None, None).unwrap();
+
+        let err = lib.remove(&container.id, true).unwrap_err().to_string();
+        assert!(err.contains("contains other games"), "{err}");
+        assert!(parent.exists(), "the container folder must survive");
+        assert_eq!(lib.games.len(), 2);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn remove_deletes_only_the_game_folder() {
+        let dir = temp_dir("leaf-remove");
+        let paths = Paths {
+            config_file: dir.join("config.json"),
+            queue_file: dir.join("queue.json"),
+            history_file: dir.join("history.json"),
+            seeds_file: dir.join("seeds.json"),
+            torrents_dir: dir.join("torrents"),
+            data_dir: dir.join("state"),
+        };
+        let game_dir = dir.join("Game A");
+        std::fs::create_dir_all(&game_dir).unwrap();
+        std::fs::write(game_dir.join("game.exe"), b"x").unwrap();
+        let mut lib = Library {
+            paths,
+            install_root: dir.clone(),
+            download_root: dir.clone(),
+            games: Vec::new(),
+            running: Vec::new(),
+        };
+        let game = lib.add("Game A".into(), &game_dir, None, None).unwrap();
+
+        lib.remove(&game.id, true).unwrap();
+        assert!(!game_dir.exists(), "the game folder should be gone");
+        assert!(dir.exists(), "the parent folder stays");
+        assert!(lib.games.is_empty());
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]

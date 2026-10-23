@@ -43,6 +43,10 @@ pub struct TorrentManager {
     search_port: u16,
     stray_hits: HashMap<String, u32>,
     seed_grace_until: HashMap<String, u64>,
+    /// Last queue shape (ids + statuses) written to disk; progress alone must not cause writes.
+    last_persist_sig: String,
+    /// Last payload sent to the webview; unchanged ticks skip the IPC round-trip.
+    last_emit_sig: String,
 }
 
 fn now_ms() -> u64 {
@@ -50,6 +54,62 @@ fn now_ms() -> u64 {
         .duration_since(UNIX_EPOCH)
         .map(|d| d.as_millis() as u64)
         .unwrap_or(0)
+}
+
+/// Rounded down on purpose: 99.6 % must not read as "done" while bytes are still arriving.
+fn progress_percent(progress: u64, total: u64, finished: bool) -> u32 {
+    if total == 0 {
+        return 0;
+    }
+    if finished {
+        return 100;
+    }
+    ((progress as f64 / total as f64) * 100.0)
+        .floor()
+        .clamp(0.0, 99.0) as u32
+}
+
+/// Everything the UI shows per torrent, except the piece map — that one rides along whenever
+/// progress moves, so a second of identical ticks costs nothing.
+fn list_signature(list: &TorrentListResponse) -> String {
+    use std::fmt::Write as _;
+    let mut sig = String::with_capacity(512);
+    for q in &list.downloads {
+        let _ = write!(
+            sig,
+            "{}:{}:{:?}:{}:{}:{:?}:{};",
+            q.id,
+            q.progress,
+            q.status,
+            q.speed,
+            q.peers,
+            q.eta,
+            q.error.is_some()
+        );
+    }
+    for s in &list.seeds {
+        let _ = write!(
+            sig,
+            "{}:{}:{:?}:{}:{};",
+            s.id, s.uploaded, s.status, s.peers, s.upload_speed
+        );
+    }
+    let _ = write!(sig, "h{}", list.history.len());
+    sig
+}
+
+/// Disk state that is worth a write: which torrents exist and in what state. Bytes and speed
+/// change every tick and are refreshed on the next launch anyway.
+fn queue_signature(queue: &[QueueItem], seeds: &HashMap<String, SeedItem>) -> String {
+    use std::fmt::Write as _;
+    let mut sig = String::with_capacity(128);
+    for q in queue {
+        let _ = write!(sig, "{}:{:?};", q.id, q.status);
+    }
+    for s in seeds.values() {
+        let _ = write!(sig, "{}:{:?};", s.id, s.status);
+    }
+    sig
 }
 
 fn torrent_id(id: &str) -> anyhow::Result<TorrentIdOrHash> {
@@ -194,50 +254,68 @@ impl TorrentManager {
             search_port,
             stray_hits: HashMap::new(),
             seed_grace_until: HashMap::new(),
+            last_persist_sig: String::new(),
+            last_emit_sig: String::new(),
         };
 
         let shared = Arc::new(Mutex::new(mgr));
+
         let restore_ref = shared.clone();
         tauri::async_runtime::spawn(async move {
-            let mut g = restore_ref.lock().await;
-            if let Err(e) = g.restore_active().await {
-                warn!("restore_active error: {e:#}");
+            // Take the plan under the lock, restore outside it: the window must be able to
+            // list the queue while torrents are still being re-added.
+            let plan = restore_ref.lock().await.restore_plan();
+            for (id, source, dir) in plan {
+                let mut g = restore_ref.lock().await;
+                g.restore_one(&id, &source, &dir).await;
             }
         });
+
         let poll_ref = shared.clone();
         let handle = app.clone();
         tauri::async_runtime::spawn(async move {
             loop {
                 tokio::time::sleep(Duration::from_millis(POLL_MS)).await;
-                let list = {
+                let (list, changed) = {
                     let mut g = poll_ref.lock().await;
                     if let Err(e) = g.tick() {
                         warn!("tick error: {e:#}");
                     }
-                    g.list()
+                    let list = g.list();
+                    let sig = list_signature(&list);
+                    let changed = sig != g.last_emit_sig;
+                    if changed {
+                        g.last_emit_sig = sig;
+                    }
+                    (list, changed)
                 };
-                let _ = handle.emit("torrent-progress", list);
+                if changed {
+                    let _ = handle.emit("torrent-progress", list);
+                }
             }
         });
 
         Ok(shared)
     }
 
-    async fn restore_active(&mut self) -> anyhow::Result<()> {
-        let items: Vec<QueueItem> = self.queue.clone();
-        for item in items {
+    /// Torrents that should be re-added on startup, collected without touching the network.
+    fn restore_plan(&self) -> Vec<(String, String, String)> {
+        let mut plan = Vec::new();
+        for item in &self.queue {
             if item.status == DownloadStatus::Downloading {
-                self.restore_one(&item.id, &item.magnet, &item.dir).await;
+                plan.push((item.id.clone(), item.magnet.clone(), item.dir.clone()));
             }
         }
-        let seeds: Vec<SeedItem> = self.seeds.values().cloned().collect();
-        for seed in seeds {
+        for seed in self.seeds.values() {
             if seed.status == SeedStatus::Seeding {
-                let source = self.torrent_source(&seed.id, &seed.magnet);
-                self.restore_one(&seed.id, &source, &seed.dir).await;
+                plan.push((
+                    seed.id.clone(),
+                    self.torrent_source(&seed.id, &seed.magnet),
+                    seed.dir.clone(),
+                ));
             }
         }
-        Ok(())
+        plan
     }
 
     async fn restore_one(&self, id: &str, source: &str, dir: &str) {
@@ -523,15 +601,20 @@ impl TorrentManager {
 
     pub async fn remove(&mut self, id: &str, delete_files: bool) -> anyhow::Result<()> {
         let id = norm_hash(id);
-        self.queue.retain(|q| norm_hash(&q.id) != id);
-        self.seeds.remove(&id);
+        // Destructive half first: forgetting the entry and then reporting success is how
+        // "deleted" torrents keep occupying the disk.
         if let Some(tid) = self.resolve_torrent(&id) {
             if delete_files {
-                let _ = self.api.api_torrent_action_delete(tid).await;
-            } else {
-                let _ = self.api.api_torrent_action_forget(tid).await;
+                self.api
+                    .api_torrent_action_delete(tid)
+                    .await
+                    .map_err(|e| anyhow::anyhow!("could not delete the files: {e}"))?;
+            } else if let Err(e) = self.api.api_torrent_action_forget(tid).await {
+                warn!("forget failed for {id}: {e:#}");
             }
         }
+        self.queue.retain(|q| norm_hash(&q.id) != id);
+        self.seeds.remove(&id);
         self.persist_queue()?;
         self.persist_seeds()?;
         Ok(())
@@ -614,11 +697,8 @@ impl TorrentManager {
 
             self.cache_torrent_meta_if_ready(&hash);
 
-            let progress_pct = if stats.total_bytes > 0 {
-                ((stats.progress_bytes as f64 / stats.total_bytes as f64) * 100.0).round() as u32
-            } else {
-                0
-            };
+            let progress_pct =
+                progress_percent(stats.progress_bytes, stats.total_bytes, stats.finished);
 
             let (down_speed, up_speed, peers, eta) = if let Some(live) = &stats.live {
                 let down = mbps_to_bytes(live.download_speed.mbps);
@@ -689,11 +769,12 @@ impl TorrentManager {
             self.complete_download(&id);
         }
 
-        if let Err(e) = self.persist_queue() {
-            warn!("persist_queue failed: {e:#}");
-        }
-        if let Err(e) = self.persist_seeds() {
-            warn!("persist_seeds failed: {e:#}");
+        let sig = queue_signature(&self.queue, &self.seeds);
+        if sig != self.last_persist_sig {
+            match self.persist_queue().and_then(|()| self.persist_seeds()) {
+                Ok(()) => self.last_persist_sig = sig,
+                Err(e) => warn!("persist state failed: {e:#}"),
+            }
         }
         Ok(())
     }
@@ -778,5 +859,19 @@ impl TorrentManager {
             })
             .collect();
         save_seeds(&self.paths, &records)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::progress_percent;
+
+    #[test]
+    fn progress_never_reaches_100_before_finished() {
+        assert_eq!(progress_percent(996, 1000, false), 99);
+        assert_eq!(progress_percent(999, 1000, false), 99);
+        assert_eq!(progress_percent(1000, 1000, true), 100);
+        assert_eq!(progress_percent(0, 0, false), 0);
+        assert_eq!(progress_percent(5, 10, false), 50);
     }
 }
