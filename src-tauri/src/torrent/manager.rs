@@ -120,26 +120,50 @@ fn mbps_to_bytes(mbps: f64) -> u64 {
     (mbps * 1024.0 * 1024.0) as u64
 }
 
-fn make_seed_item(
-    rec: &SeedRecord,
-    id: String,
+/// What a seed needs from the queue or history entry it came from. Both have the same shape,
+/// which is why they used to be copied by two near-identical loops with seven positional args.
+struct SeedFields {
     name: String,
     source: Option<String>,
     magnet: String,
     dir: String,
     size_bytes: u64,
-) -> SeedItem {
-    SeedItem {
-        id,
-        name,
-        source,
-        magnet,
-        dir,
-        size_bytes,
-        status: seed_status(&rec.status),
-        upload_speed: 0,
-        uploaded: 0,
-        peers: 0,
+}
+
+impl SeedFields {
+    fn from_queue(item: &QueueItem) -> Self {
+        Self {
+            name: item.name.clone(),
+            source: item.source.clone(),
+            magnet: item.magnet.clone(),
+            dir: item.dir.clone(),
+            size_bytes: item.total_bytes,
+        }
+    }
+
+    fn from_history(item: &HistoryItem) -> Self {
+        Self {
+            name: item.name.clone(),
+            source: item.source.clone(),
+            magnet: item.magnet.clone(),
+            dir: item.dir.clone(),
+            size_bytes: item.size_bytes,
+        }
+    }
+
+    fn into_item(self, rec: &SeedRecord) -> SeedItem {
+        SeedItem {
+            id: rec.id.clone(),
+            name: self.name,
+            source: self.source,
+            magnet: self.magnet,
+            dir: self.dir,
+            size_bytes: self.size_bytes,
+            status: seed_status(&rec.status),
+            upload_speed: 0,
+            uploaded: 0,
+            peers: 0,
+        }
     }
 }
 
@@ -205,44 +229,27 @@ impl TorrentManager {
         let seed_records = load_seeds(&paths);
         let history = load_history(&paths);
 
-        let mut seeds = HashMap::new();
+        // Queue wins over history for the same id: the queue entry is the fresher one.
+        let mut fields: HashMap<&str, SeedFields> = HashMap::new();
         for rec in &seed_records {
             if let Some(item) = queue.iter().find(|q| q.id == rec.id) {
-                seeds.insert(
-                    rec.id.clone(),
-                    make_seed_item(
-                        rec,
-                        item.id.clone(),
-                        item.name.clone(),
-                        item.source.clone(),
-                        item.magnet.clone(),
-                        item.dir.clone(),
-                        item.total_bytes,
-                    ),
-                );
+                fields.insert(rec.id.as_str(), SeedFields::from_queue(item));
             }
         }
-
-        // Also restore seeds from history entries not in queue
         for rec in &seed_records {
-            if seeds.contains_key(&rec.id) {
-                continue;
-            }
             if let Some(h) = history.iter().find(|h| h.id == rec.id) {
-                seeds.insert(
-                    rec.id.clone(),
-                    make_seed_item(
-                        rec,
-                        h.id.clone(),
-                        h.name.clone(),
-                        h.source.clone(),
-                        h.magnet.clone(),
-                        h.dir.clone(),
-                        h.size_bytes,
-                    ),
-                );
+                fields
+                    .entry(rec.id.as_str())
+                    .or_insert_with(|| SeedFields::from_history(h));
             }
         }
+        let seeds: HashMap<String, SeedItem> = seed_records
+            .iter()
+            .filter_map(|rec| {
+                let f = fields.remove(rec.id.as_str())?;
+                Some((rec.id.clone(), f.into_item(rec)))
+            })
+            .collect();
 
         let mgr = Self {
             paths,

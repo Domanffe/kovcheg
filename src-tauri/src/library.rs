@@ -834,7 +834,12 @@ pub async fn library_add(
         (game.id.clone(), guard.paths().clone())
     };
 
-    spawn_cover_lookup(app.clone(), lib.clone(), paths, game_id.clone(), title);
+    spawn_cover_refresh(
+        app.clone(),
+        lib.clone(),
+        paths,
+        vec![(game_id.clone(), title)],
+    );
     broadcast(&app, &lib).await;
 
     let guard = lib.lock().await;
@@ -908,37 +913,7 @@ pub async fn library_import(
             .collect();
     }
 
-    if !added_ids.is_empty() {
-        // Three at a time: importing a whole games folder must not fire fifty parallel
-        // requests at the Steam store and collect 429s.
-        let lookup_app = app.clone();
-        let lookup_lib = lib.clone();
-        tauri::async_runtime::spawn(async move {
-            for chunk in added_ids.chunks(3) {
-                let mut tasks = Vec::new();
-                for (id, title) in chunk {
-                    let (task_app, task_lib, task_paths) =
-                        (lookup_app.clone(), lookup_lib.clone(), paths.clone());
-                    let (id, title) = (id.clone(), title.clone());
-                    tasks.push(tauri::async_runtime::spawn(async move {
-                        match fetch_cover(&task_paths, &id, &title).await {
-                            Ok(Some(app_id)) => {
-                                task_lib.lock().await.set_steam_app_id(&id, app_id);
-                            }
-                            Ok(None) => tracing::info!(title = %title, "no steam match for cover"),
-                            Err(e) => tracing::warn!(title = %title, "cover lookup failed: {e:#}"),
-                        }
-                        task_app
-                    }));
-                }
-                for task in tasks {
-                    let _ = task.await;
-                }
-                tokio::time::sleep(Duration::from_millis(400)).await;
-            }
-            broadcast(&lookup_app, &lookup_lib).await;
-        });
-    }
+    spawn_cover_refresh(app.clone(), lib.clone(), paths.clone(), added_ids);
     broadcast(&app, &lib).await;
     Ok(report)
 }
@@ -1163,27 +1138,49 @@ pub async fn library_install(
     drop(guard);
 
     emit_progress(&app, &title, "done", "Installed".into());
-    spawn_cover_lookup(app.clone(), lib.clone(), paths, id.clone(), title);
+    spawn_cover_refresh(app.clone(), lib.clone(), paths, vec![(id.clone(), title)]);
     broadcast(&app, &lib).await;
     Ok(id)
 }
 
-fn spawn_cover_lookup(
+/// How many Steam cover lookups may be in flight at once. Importing a whole games folder
+/// must not fire fifty parallel requests at the store and collect 429s.
+const COVER_BATCH: usize = 3;
+const COVER_PAUSE_MS: u64 = 400;
+
+/// Fetches missing Steam covers for `games` (id, title) in batches, then refreshes the UI once.
+/// Fire-and-forget: the caller does not wait and does not need the result.
+fn spawn_cover_refresh(
     app: AppHandle,
     lib: Arc<Mutex<Library>>,
     paths: Paths,
-    id: String,
-    title: String,
+    games: Vec<(String, String)>,
 ) {
+    if games.is_empty() {
+        return;
+    }
     tauri::async_runtime::spawn(async move {
-        match fetch_cover(&paths, &id, &title).await {
-            Ok(Some(app_id)) => {
-                lib.lock().await.set_steam_app_id(&id, app_id);
-                broadcast(&app, &lib).await;
+        for chunk in games.chunks(COVER_BATCH) {
+            let mut tasks = Vec::new();
+            for (id, title) in chunk {
+                let (task_lib, task_paths) = (lib.clone(), paths.clone());
+                let (id, title) = (id.clone(), title.clone());
+                tasks.push(tauri::async_runtime::spawn(async move {
+                    match fetch_cover(&task_paths, &id, &title).await {
+                        Ok(Some(app_id)) => {
+                            task_lib.lock().await.set_steam_app_id(&id, app_id);
+                        }
+                        Ok(None) => tracing::info!(title = %title, "no steam match for cover"),
+                        Err(e) => tracing::warn!(title = %title, "cover lookup failed: {e:#}"),
+                    }
+                }));
             }
-            Ok(None) => tracing::info!(title = %title, "no steam match for cover"),
-            Err(e) => tracing::warn!(title = %title, "cover lookup failed: {e:#}"),
+            for task in tasks {
+                let _ = task.await;
+            }
+            tokio::time::sleep(Duration::from_millis(COVER_PAUSE_MS)).await;
         }
+        broadcast(&app, &lib).await;
     });
 }
 
