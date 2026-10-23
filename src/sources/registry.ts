@@ -1,5 +1,5 @@
 import { buildSource } from "./build";
-import { SOURCE_IDS } from "./meta";
+import { ACTIVE_SOURCE_IDS } from "./meta";
 import type { Source, SourceId } from "./types";
 
 const LOADERS: Record<SourceId, () => Promise<Source>> = {
@@ -35,5 +35,5 @@ async function loadSource(id: SourceId): Promise<Source> {
 }
 
 export async function loadAllSources(): Promise<Source[]> {
-  return Promise.all(SOURCE_IDS.map(loadSource));
+  return Promise.all(ACTIVE_SOURCE_IDS.map(loadSource));
 }

@@ -80,6 +80,11 @@ export const en = {
     installFolder: "Install games into",
     installFolderHint: "Repacks are installed into a subfolder here. Empty means the download folder.",
     installFolderPlaceholder: "Same as download folder",
+    proxy: "Proxy",
+    proxyHint:
+      "Used for source search, e.g. http://127.0.0.1:10809. Empty means the system proxy. Takes effect after a restart.",
+    proxyPlaceholder: "http://127.0.0.1:10809",
+    proxyRestart: "Proxy saved. Restart the app so the search sidecar picks it up.",
     close: "Close",
     downloadFolder: "Download folder",
     downloadFolderHint: "Each torrent is saved in its own subfolder here.",

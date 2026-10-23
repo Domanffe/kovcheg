@@ -7,6 +7,8 @@ export interface SourceMeta {
   homepage: string;
   reportsHealth: boolean;
   browseOnly?: boolean;
+  /** Skipped by the search: the site answers 401/403/5xx from every network we tested. */
+  disabled?: boolean;
 }
 
 export const SOURCE_IDS: readonly SourceId[] = [
@@ -78,6 +80,7 @@ export const SOURCE_META: Record<SourceId, SourceMeta> = {
     group: "Movies",
     homepage: "https://1337x.to",
     reportsHealth: true,
+    disabled: true,
   },
   "bittorrented-movies": {
     id: "bittorrented-movies",
@@ -85,6 +88,7 @@ export const SOURCE_META: Record<SourceId, SourceMeta> = {
     group: "Movies",
     homepage: "https://bittorrented.com",
     reportsHealth: true,
+    disabled: true,
   },
   "tgx-movies": {
     id: "tgx-movies",
@@ -92,6 +96,7 @@ export const SOURCE_META: Record<SourceId, SourceMeta> = {
     group: "Movies",
     homepage: "https://torrentgalaxy.to",
     reportsHealth: true,
+    disabled: true,
   },
   eztv: {
     id: "eztv",
@@ -113,6 +118,7 @@ export const SOURCE_META: Record<SourceId, SourceMeta> = {
     group: "TV",
     homepage: "https://1337x.to",
     reportsHealth: true,
+    disabled: true,
   },
   "bittorrented-tv": {
     id: "bittorrented-tv",
@@ -120,6 +126,7 @@ export const SOURCE_META: Record<SourceId, SourceMeta> = {
     group: "TV",
     homepage: "https://bittorrented.com",
     reportsHealth: true,
+    disabled: true,
   },
   torlock: {
     id: "torlock",
@@ -127,6 +134,7 @@ export const SOURCE_META: Record<SourceId, SourceMeta> = {
     group: "TV",
     homepage: "https://www.torlock.com",
     reportsHealth: true,
+    disabled: true,
   },
   nyaa: {
     id: "nyaa",
@@ -156,5 +164,10 @@ export function getSourceMeta(id: SourceId): SourceMeta {
 }
 
 export function allSourceMeta(): SourceMeta[] {
-  return SOURCE_IDS.map((id) => SOURCE_META[id]);
+  return ACTIVE_SOURCE_IDS.map((id) => SOURCE_META[id]);
 }
+
+/** Sources that still answer. A disabled source keeps its meta so old history keeps its tag. */
+export const ACTIVE_SOURCE_IDS: readonly SourceId[] = SOURCE_IDS.filter(
+  (id) => !SOURCE_META[id].disabled,
+);

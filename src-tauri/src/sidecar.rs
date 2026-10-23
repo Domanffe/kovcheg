@@ -51,12 +51,28 @@ pub async fn ensure_search_sidecar(app: &AppHandle) -> anyhow::Result<SearchSide
     }
 }
 
+/// Proxy configured in the app, if any. The sidecar needs it as an env var because Node
+/// does not read the system proxy the way a browser or curl does.
+fn config_proxy() -> Option<String> {
+    let paths = crate::config::resolve_paths();
+    let proxy = crate::config::load_config(&paths).proxy.trim().to_string();
+    (!proxy.is_empty()).then_some(proxy)
+}
+
 async fn spawn_bundled_sidecar(app: &AppHandle) -> anyhow::Result<SearchSidecar> {
     let sidecar = app
         .shell()
         .sidecar("search-sidecar")
         .context("search-sidecar binary not bundled (run npm run build:sidecar:bin)")?
         .args(["0"]);
+
+    let sidecar = match config_proxy() {
+        Some(proxy) => {
+            info!("search sidecar uses the configured proxy");
+            sidecar.env("KOVCHEG_PROXY", proxy)
+        }
+        None => sidecar,
+    };
 
     let (mut rx, child) = sidecar
         .spawn()
@@ -108,7 +124,9 @@ async fn spawn_bundled_sidecar(app: &AppHandle) -> anyhow::Result<SearchSidecar>
     }
 
     let _ = child.kill();
-    Err(anyhow!("search sidecar port {port} did not respond to /health"))
+    Err(anyhow!(
+        "search sidecar port {port} did not respond to /health"
+    ))
 }
 
 #[cfg(debug_assertions)]
@@ -128,12 +146,17 @@ async fn spawn_node_fallback(app: &AppHandle) -> anyhow::Result<SearchSidecar> {
 
     info!(path = %js.display(), "spawning node search sidecar (dev fallback)");
 
-    let (mut rx, child) = app
+    let command = app
         .shell()
         .command("node")
-        .args([js.to_string_lossy().to_string(), "0".to_string()])
-        .spawn()
-        .context("failed to spawn node sidecar")?;
+        .args([js.to_string_lossy().to_string(), "0".to_string()]);
+
+    let command = match config_proxy() {
+        Some(proxy) => command.env("KOVCHEG_PROXY", proxy),
+        None => command,
+    };
+
+    let (mut rx, child) = command.spawn().context("failed to spawn node sidecar")?;
 
     let port = tokio::time::timeout(Duration::from_secs(30), async {
         while let Some(event) = rx.recv().await {

@@ -1,4 +1,4 @@
-import { SOURCE_IDS } from "../sources/meta";
+import { ACTIVE_SOURCE_IDS } from "../sources/meta";
 import type { SourceId, TorrentResult } from "../sources/types";
 
 export interface SourceState {
@@ -18,7 +18,7 @@ export interface ConcurrentSearchState {
 
 export function blankPerSource(loading: boolean): Record<SourceId, SourceState> {
   const out = {} as Record<SourceId, SourceState>;
-  for (const id of SOURCE_IDS) {
+  for (const id of ACTIVE_SOURCE_IDS) {
     out[id] = { loading, error: null, code: null, count: 0 };
   }
   return out;
@@ -30,6 +30,6 @@ export function idleSearchState(): ConcurrentSearchState {
     perSource: blankPerSource(false),
     loading: false,
     done: 0,
-    total: SOURCE_IDS.length,
+    total: ACTIVE_SOURCE_IDS.length,
   };
 }

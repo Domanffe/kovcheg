@@ -5,6 +5,7 @@ import { startSearchServer } from "./search-server.js";
 // Browsers and curl honour the proxy env vars, Node's fetch ignores them — so adopt them
 // here, otherwise every such source reports "fetch failed" while the same URL opens in a browser.
 const proxyUrl =
+  process.env.KOVCHEG_PROXY ??
   process.env.HTTPS_PROXY ??
   process.env.https_proxy ??
   process.env.HTTP_PROXY ??

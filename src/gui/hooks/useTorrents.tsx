@@ -63,6 +63,7 @@ export interface AppConfig {
   downloadDir: string;
   trackers: string[];
   installDir?: string;
+  proxy?: string;
 }
 
 interface TorrentCtx {

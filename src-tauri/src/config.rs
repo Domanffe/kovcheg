@@ -15,6 +15,9 @@ pub struct AppConfig {
     /// Empty means "install next to the downloads".
     #[serde(default)]
     pub install_dir: String,
+    /// HTTP/SOCKS proxy for the search sidecar. Empty falls back to the system env vars.
+    #[serde(default)]
+    pub proxy: String,
 }
 
 fn default_download_dir() -> String {
@@ -31,6 +34,7 @@ impl Default for AppConfig {
             download_dir: default_download_dir(),
             trackers: vec![],
             install_dir: String::new(),
+            proxy: String::new(),
         }
     }
 }
@@ -98,8 +102,8 @@ fn copy_dir(from: &Path, to: &Path) -> std::io::Result<()> {
 }
 
 pub fn resolve_paths() -> Paths {
-    if let Ok(override_dir) = std::env::var("KOVCHEG_STATE_DIR")
-        .or_else(|_| std::env::var("TORLINK_STATE_DIR"))
+    if let Ok(override_dir) =
+        std::env::var("KOVCHEG_STATE_DIR").or_else(|_| std::env::var("TORLINK_STATE_DIR"))
     {
         let base = PathBuf::from(override_dir);
         let data = base.join("data");
