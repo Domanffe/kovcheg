@@ -1,4 +1,5 @@
 import { decodeResponseText, fetchResilient, HttpError, USER_AGENT } from "../util/net";
+import { dedupeByUrl } from "./build";
 import { buildMagnet } from "./magnet";
 import { unescapeEntities } from "./rss";
 import { magnetFromTorrentBytes } from "./torrentBytes";
@@ -20,18 +21,6 @@ function searchUrl(query: string): string {
   return `${HOME}/index.php?do=search&subaction=search&story=${encodeURIComponent(query.trim())}`;
 }
 
-function dedupeLimit(links: GameLink[]): GameLink[] {
-  const seen = new Set<string>();
-  const out: GameLink[] = [];
-  for (const link of links) {
-    if (seen.has(link.url)) continue;
-    seen.add(link.url);
-    out.push(link);
-    if (out.length >= MAX_RESULTS) break;
-  }
-  return out;
-}
-
 export function parseDleSearchResults(html: string): GameLink[] {
   const links: GameLink[] = [];
   const re =
@@ -39,7 +28,7 @@ export function parseDleSearchResults(html: string): GameLink[] {
   for (const match of html.matchAll(re)) {
     links.push({ title: unescapeEntities(match[2]!.trim()), url: match[1]! });
   }
-  return dedupeLimit(links);
+  return dedupeByUrl(links, MAX_RESULTS);
 }
 
 export function parseDleRssGames(xml: string): GameLink[] {
@@ -52,7 +41,7 @@ export function parseDleRssGames(xml: string): GameLink[] {
     const added = addedStr ? new Date(addedStr).getTime() / 1000 : undefined;
     links.push({ title, url, added });
   }
-  return dedupeLimit(links);
+  return dedupeByUrl(links, MAX_RESULTS);
 }
 
 export function parseTorrentDirFromPage(html: string): string | null {

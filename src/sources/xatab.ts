@@ -1,4 +1,5 @@
 import { decodeResponseText, fetchResilient, HttpError, USER_AGENT } from "../util/net";
+import { dedupeByUrl } from "./build";
 import { buildMagnet } from "./magnet";
 import { unescapeEntities } from "./rss";
 import { magnetFromTorrentBytes } from "./torrentBytes";
@@ -23,18 +24,6 @@ function searchBody(query: string): string {
   }).toString();
 }
 
-function dedupeLimit(links: GameLink[]): GameLink[] {
-  const seen = new Set<string>();
-  const out: GameLink[] = [];
-  for (const link of links) {
-    if (seen.has(link.url)) continue;
-    seen.add(link.url);
-    out.push(link);
-    if (out.length >= MAX_RESULTS) break;
-  }
-  return out;
-}
-
 export function parseXatabSearchResults(html: string): GameLink[] {
   const links: GameLink[] = [];
   const gridRe =
@@ -50,7 +39,7 @@ export function parseXatabSearchResults(html: string): GameLink[] {
     }
   }
 
-  return dedupeLimit(links);
+  return dedupeByUrl(links, MAX_RESULTS);
 }
 
 export function parseMagnetFromPage(html: string): string | null {
