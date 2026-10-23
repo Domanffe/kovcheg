@@ -55,8 +55,12 @@ pub async fn ensure_search_sidecar(app: &AppHandle) -> anyhow::Result<SearchSide
 /// does not read the system proxy the way a browser or curl does.
 fn config_proxy() -> Option<String> {
     let paths = crate::config::resolve_paths();
-    let proxy = crate::config::load_config(&paths).proxy.trim().to_string();
-    (!proxy.is_empty()).then_some(proxy)
+    proxy_for_sidecar(&crate::config::load_config(&paths))
+}
+
+fn proxy_for_sidecar(config: &crate::config::AppConfig) -> Option<String> {
+    let proxy = config.proxy.trim();
+    (!proxy.is_empty()).then(|| proxy.to_string())
 }
 
 async fn spawn_bundled_sidecar(app: &AppHandle) -> anyhow::Result<SearchSidecar> {
@@ -184,5 +188,32 @@ async fn health_ok(port: u16) -> bool {
     match reqwest::get(&url).await {
         Ok(resp) => resp.status().is_success(),
         Err(_) => false,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::proxy_for_sidecar;
+    use crate::config::AppConfig;
+
+    fn config_with(proxy: &str) -> AppConfig {
+        AppConfig {
+            proxy: proxy.to_string(),
+            ..AppConfig::default()
+        }
+    }
+
+    #[test]
+    fn empty_proxy_leaves_the_env_chain_in_charge() {
+        assert_eq!(proxy_for_sidecar(&config_with("")), None);
+        assert_eq!(proxy_for_sidecar(&config_with("   ")), None);
+    }
+
+    #[test]
+    fn configured_proxy_is_trimmed() {
+        assert_eq!(
+            proxy_for_sidecar(&config_with(" http://127.0.0.1:10809 ")),
+            Some("http://127.0.0.1:10809".to_string())
+        );
     }
 }

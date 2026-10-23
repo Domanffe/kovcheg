@@ -82,7 +82,7 @@ export const en = {
     installFolderPlaceholder: "Same as download folder",
     proxy: "Proxy",
     proxyHint:
-      "Used for source search, e.g. http://127.0.0.1:10809. Empty means the system proxy. Takes effect after a restart.",
+      "Used for source search, e.g. http://127.0.0.1:10809. Empty means the system proxy. Takes effect after a restart. Stored as plain text in the config file, so avoid credentials.",
     proxyPlaceholder: "http://127.0.0.1:10809",
     proxyRestart: "Proxy saved. Restart the app so the search sidecar picks it up.",
     close: "Close",

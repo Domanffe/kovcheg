@@ -164,11 +164,11 @@ export function getSourceMeta(id: SourceId): SourceMeta {
   return SOURCE_META[id];
 }
 
-export function allSourceMeta(): SourceMeta[] {
-  return ACTIVE_SOURCE_IDS.map((id) => SOURCE_META[id]);
-}
-
 /** Sources that still answer. A disabled source keeps its meta so old history keeps its tag. */
 export const ACTIVE_SOURCE_IDS: readonly SourceId[] = SOURCE_IDS.filter(
   (id) => !SOURCE_META[id].disabled,
 );
+
+export function allSourceMeta(): SourceMeta[] {
+  return ACTIVE_SOURCE_IDS.map((id) => SOURCE_META[id]);
+}
