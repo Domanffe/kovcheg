@@ -38,7 +38,9 @@ export function useSearch(activeQuery: string | null, port: number): ConcurrentS
       es.onmessage = (ev) => {
         try {
           setState(JSON.parse(ev.data) as ConcurrentSearchState);
-        } catch {}
+        } catch {
+          // A malformed frame must not tear down the stream; the next one replaces the state.
+        }
       };
       es.addEventListener("done", () => es.close());
       es.addEventListener("error", () => es.close());
