@@ -7,7 +7,8 @@ export interface SourceMeta {
   homepage: string;
   reportsHealth: boolean;
   browseOnly?: boolean;
-  /** Skipped by the search: the site answers 401/403/5xx from every network we tested. */
+  /** Skipped by the search: answers 401/403/5xx from the RU network as of 2026-10-23.
+   *  Re-check before trusting this list — the same sites often work from other networks. */
   disabled?: boolean;
 }
 

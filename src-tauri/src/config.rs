@@ -132,6 +132,30 @@ pub fn resolve_paths() -> Paths {
     }
 }
 
+/// Accepts what people actually paste into the field: a bare `127.0.0.1:10809` gets an
+/// `http://` prefix. SOCKS is refused instead of being saved and silently failing — the
+/// sidecar's ProxyAgent only speaks HTTP proxies.
+pub fn normalize_proxy(raw: &str) -> anyhow::Result<String> {
+    let trimmed = raw.trim();
+    if trimmed.is_empty() {
+        return Ok(String::new());
+    }
+    let lower = trimmed.to_lowercase();
+    anyhow::ensure!(
+        !lower.starts_with("socks"),
+        "only http/https proxies are supported — a socks:// address will not work"
+    );
+    let with_scheme = if lower.starts_with("http://") || lower.starts_with("https://") {
+        trimmed.to_string()
+    } else {
+        format!("http://{trimmed}")
+    };
+    let url =
+        reqwest::Url::parse(&with_scheme).map_err(|e| anyhow::anyhow!("invalid proxy URL: {e}"))?;
+    anyhow::ensure!(url.host_str().is_some(), "invalid proxy URL: no host");
+    Ok(with_scheme)
+}
+
 pub fn load_config(paths: &Paths) -> AppConfig {
     let raw = match std::fs::read_to_string(&paths.config_file) {
         Ok(s) => s,
@@ -166,6 +190,30 @@ mod tests {
         let cfg = AppConfig::default();
         assert!(!cfg.download_dir.is_empty());
         assert!(cfg.trackers.is_empty());
+    }
+
+    #[test]
+    fn normalize_proxy_adds_scheme_and_keeps_http() {
+        assert_eq!(
+            normalize_proxy(" 127.0.0.1:10809 ").unwrap(),
+            "http://127.0.0.1:10809"
+        );
+        assert_eq!(
+            normalize_proxy("http://127.0.0.1:10809").unwrap(),
+            "http://127.0.0.1:10809"
+        );
+        assert_eq!(
+            normalize_proxy("https://proxy.local:8443").unwrap(),
+            "https://proxy.local:8443"
+        );
+        assert_eq!(normalize_proxy("   ").unwrap(), "");
+    }
+
+    #[test]
+    fn normalize_proxy_refuses_socks_and_junk() {
+        assert!(normalize_proxy("socks5://127.0.0.1:2080").is_err());
+        assert!(normalize_proxy("SOCKS://127.0.0.1:1080").is_err());
+        assert!(normalize_proxy("http://").is_err());
     }
 
     #[test]

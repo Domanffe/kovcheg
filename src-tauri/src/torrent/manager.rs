@@ -22,7 +22,9 @@ const POLL_MS: u64 = 500;
 const RESTORE_TIMEOUT_SECS: u64 = 5;
 const STRAY_TICKS: u32 = 2;
 const SEED_GRACE_MS: u64 = 10_000;
-use crate::torrent::logic::{norm_hash, parse_bitfield_dump, seed_status, seed_status_raw, stray_download};
+use crate::torrent::logic::{
+    norm_hash, parse_bitfield_dump, seed_status, seed_status_raw, stray_download,
+};
 
 #[derive(Clone, serde::Serialize)]
 pub struct TorrentListResponse {
@@ -247,7 +249,10 @@ impl TorrentManager {
         {
             Ok(Ok(())) => {}
             Ok(Err(e)) => warn!(torrent_id = id, "restore skipped: {e:#}"),
-            Err(_) => warn!(torrent_id = id, "restore timed out after {RESTORE_TIMEOUT_SECS}s"),
+            Err(_) => warn!(
+                torrent_id = id,
+                "restore timed out after {RESTORE_TIMEOUT_SECS}s"
+            ),
         }
     }
 
@@ -367,6 +372,10 @@ impl TorrentManager {
     pub fn set_config(&mut self, config: AppConfig) -> anyhow::Result<()> {
         crate::path_guard::validate_download_root(&config.download_dir)
             .map_err(|e| anyhow::anyhow!(e))?;
+        let config = AppConfig {
+            proxy: crate::config::normalize_proxy(&config.proxy)?,
+            ..config
+        };
         self.config = config.clone();
         save_config(&self.paths, &config)?;
         Ok(())
