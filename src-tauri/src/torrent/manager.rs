@@ -374,10 +374,12 @@ impl TorrentManager {
 
     async fn start_torrent(&self, _id: &str, source: &str, dir: &str) -> anyhow::Result<()> {
         let dir = self.validated_dir(dir)?;
-        let mut opts = AddTorrentOptions::default();
-        opts.output_folder = Some(dir);
-        // Required for resume / re-add when files already exist on disk.
-        opts.overwrite = true;
+        let mut opts = AddTorrentOptions {
+            output_folder: Some(dir),
+            // Required for resume / re-add when files already exist on disk.
+            overwrite: true,
+            ..Default::default()
+        };
         if !self.config.trackers.is_empty() {
             opts.trackers = Some(self.config.trackers.clone());
         }
@@ -519,13 +521,10 @@ impl TorrentManager {
         self.queue.retain(|q| q.id != id);
         self.queue.push(item);
 
-        if let Err(e) = self.start_queue_torrent(&id, &magnet, &dir).await {
-            return Err(e);
-        }
+        self.start_queue_torrent(&id, &magnet, &dir).await?;
         self.persist_queue()?;
         Ok(())
     }
-
     /// Remove from librqbit but keep queue entry and files on disk.
     pub async fn pause(&mut self, id: &str) -> anyhow::Result<()> {
         let id = norm_hash(id);
@@ -638,9 +637,7 @@ impl TorrentManager {
             q.eta = None;
         }
         let source = self.torrent_source(&id, &item.magnet);
-        if let Err(e) = self.start_queue_torrent(&id, &source, &item.dir).await {
-            return Err(e);
-        }
+        self.start_queue_torrent(&id, &source, &item.dir).await?;
         self.persist_queue()?;
         Ok(())
     }

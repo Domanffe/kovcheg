@@ -11,7 +11,10 @@ pub struct PendingLaunch {
 
 pub fn parse_startup_launch() -> Option<PendingLaunch> {
     for arg in std::env::args().skip(1) {
-        if matches!(arg.as_str(), "--gui" | "--help" | "-h" | "--version" | "-v" | "--search") {
+        if matches!(
+            arg.as_str(),
+            "--gui" | "--help" | "-h" | "--version" | "-v" | "--search"
+        ) {
             continue;
         }
         if let Some(launch) = parse_launch_arg(&arg) {
@@ -43,12 +46,7 @@ fn parse_launch_arg(arg: &str) -> Option<PendingLaunch> {
 
 fn magnet_launch(magnet: &str) -> Option<PendingLaunch> {
     let lower = magnet.to_ascii_lowercase();
-    let hash = lower
-        .split("urn:btih:")
-        .nth(1)?
-        .split('&')
-        .next()?
-        .trim();
+    let hash = lower.split("urn:btih:").nth(1)?.split('&').next()?.trim();
     if hash.len() != 40 || !hash.chars().all(|c| c.is_ascii_hexdigit()) {
         return None;
     }
@@ -56,7 +54,7 @@ fn magnet_launch(magnet: &str) -> Option<PendingLaunch> {
         .split("&dn=")
         .nth(1)
         .and_then(|s| s.split('&').next())
-        .map(|s| urlencoding_decode(s))
+        .map(urlencoding_decode)
         .filter(|s| !s.is_empty())
         .unwrap_or_else(|| hash.to_string());
     Some(PendingLaunch {
@@ -81,7 +79,10 @@ fn torrent_file_launch(path: &str) -> Option<PendingLaunch> {
         .and_then(|s| s.to_str())
         .unwrap_or(&hash)
         .to_string();
-    let magnet = format!("magnet:?xt=urn:btih:{hash}&dn={}", urlencoding::encode(&name));
+    let magnet = format!(
+        "magnet:?xt=urn:btih:{hash}&dn={}",
+        urlencoding::encode(&name)
+    );
     Some(PendingLaunch {
         info_hash: hash,
         name,

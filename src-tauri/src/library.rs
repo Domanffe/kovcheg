@@ -468,7 +468,6 @@ pub fn clean_title(raw: &str) -> String {
             break;
         }
     }
-    let mut text = text;
     for noise in [
         "SteamRIP.com",
         "SteamRIP",
@@ -647,12 +646,10 @@ fn read_head_tail(path: &Path, window: u64) -> Vec<u8> {
     if let Ok(read) = file.read(&mut head) {
         out.extend_from_slice(&head[..read]);
     }
-    if len > window {
-        if file.seek(SeekFrom::Start(len - window)).is_ok() {
-            let mut tail = vec![0u8; window as usize];
-            if let Ok(read) = file.read(&mut tail) {
-                out.extend_from_slice(&tail[..read]);
-            }
+    if len > window && file.seek(SeekFrom::Start(len - window)).is_ok() {
+        let mut tail = vec![0u8; window as usize];
+        if let Ok(read) = file.read(&mut tail) {
+            out.extend_from_slice(&tail[..read]);
         }
     }
     out
@@ -887,7 +884,7 @@ pub async fn library_import(
             None => report.skipped.push(folder),
         }
     }
-    candidates.sort_by(|a, b| a.0.to_lowercase().cmp(&b.0.to_lowercase()));
+    candidates.sort_by_key(|c| c.0.to_lowercase());
 
     let mut added_ids: Vec<(String, String)> = Vec::new();
     let paths;

@@ -58,7 +58,10 @@ mod tests {
 
     #[test]
     fn seed_status_round_trips_missing() {
-        assert_eq!(seed_status(seed_status_raw(SeedStatus::Missing)), SeedStatus::Missing);
+        assert_eq!(
+            seed_status(seed_status_raw(SeedStatus::Missing)),
+            SeedStatus::Missing
+        );
         assert_eq!(seed_status_raw(SeedStatus::Missing), "missing");
     }
 

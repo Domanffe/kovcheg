@@ -1,8 +1,8 @@
 use tauri::State;
 
-use crate::AppState;
 use crate::config::AppConfig;
 use crate::torrent::TorrentListResponse;
+use crate::AppState;
 
 #[tauri::command]
 pub async fn get_config(state: State<'_, AppState>) -> Result<AppConfig, String> {

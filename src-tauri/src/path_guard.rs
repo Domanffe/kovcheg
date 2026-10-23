@@ -63,10 +63,7 @@ pub fn resolve_torrent_dir(
         base
     };
 
-    validate_download_path(
-        &root.join(&folder).to_string_lossy(),
-        download_root,
-    )
+    validate_download_path(&root.join(&folder).to_string_lossy(), download_root)
 }
 
 /// Validate a download root path for config changes.
@@ -178,10 +175,7 @@ mod tests {
 
     #[test]
     fn canonical_directory_requires_existing_dir() {
-        let root = std::env::temp_dir().join(format!(
-            "kovcheg-path-guard-{}",
-            std::process::id()
-        ));
+        let root = std::env::temp_dir().join(format!("kovcheg-path-guard-{}", std::process::id()));
         let _ = fs::remove_dir_all(&root);
         fs::create_dir_all(&root).unwrap();
         let canon = canonical_directory(&root.to_string_lossy()).unwrap();
@@ -191,10 +185,7 @@ mod tests {
 
     #[test]
     fn validate_download_path_allows_nested_dir() {
-        let root = std::env::temp_dir().join(format!(
-            "kovcheg-dl-root-{}",
-            std::process::id()
-        ));
+        let root = std::env::temp_dir().join(format!("kovcheg-dl-root-{}", std::process::id()));
         let nested = root.join("nested");
         let _ = fs::remove_dir_all(&root);
         fs::create_dir_all(&nested).unwrap();
@@ -206,7 +197,10 @@ mod tests {
 
     #[test]
     fn sanitize_folder_name_strips_invalid_chars() {
-        assert_eq!(sanitize_folder_name(r#"Game: Name\Part*2?"#), "Game NamePart2");
+        assert_eq!(
+            sanitize_folder_name(r#"Game: Name\Part*2?"#),
+            "Game NamePart2"
+        );
         assert_eq!(sanitize_folder_name("   "), "torrent");
     }
 
@@ -223,10 +217,7 @@ mod tests {
 
     #[test]
     fn validate_download_root_accepts_existing_dir() {
-        let root = std::env::temp_dir().join(format!(
-            "kovcheg-dl-cfg-{}",
-            std::process::id()
-        ));
+        let root = std::env::temp_dir().join(format!("kovcheg-dl-cfg-{}", std::process::id()));
         let _ = fs::remove_dir_all(&root);
         fs::create_dir_all(&root).unwrap();
         let root_s = root.to_string_lossy().to_string();
@@ -236,10 +227,7 @@ mod tests {
 
     #[test]
     fn resolve_torrent_dir_builds_nested_path() {
-        let root = std::env::temp_dir().join(format!(
-            "kovcheg-dl-resolve-{}",
-            std::process::id()
-        ));
+        let root = std::env::temp_dir().join(format!("kovcheg-dl-resolve-{}", std::process::id()));
         let _ = fs::remove_dir_all(&root);
         fs::create_dir_all(&root).unwrap();
         let root_s = root.to_string_lossy().to_string();
@@ -250,10 +238,8 @@ mod tests {
 
     #[test]
     fn resolve_torrent_dir_adds_hash_suffix_on_collision() {
-        let root = std::env::temp_dir().join(format!(
-            "kovcheg-dl-collision-{}",
-            std::process::id()
-        ));
+        let root =
+            std::env::temp_dir().join(format!("kovcheg-dl-collision-{}", std::process::id()));
         let _ = fs::remove_dir_all(&root);
         fs::create_dir_all(&root).unwrap();
         let root_s = root.to_string_lossy().to_string();
@@ -266,14 +252,9 @@ mod tests {
 
     #[test]
     fn validate_download_path_rejects_outside_root() {
-        let root = std::env::temp_dir().join(format!(
-            "kovcheg-dl-root-out-{}",
-            std::process::id()
-        ));
-        let outside = std::env::temp_dir().join(format!(
-            "kovcheg-dl-outside-{}",
-            std::process::id()
-        ));
+        let root = std::env::temp_dir().join(format!("kovcheg-dl-root-out-{}", std::process::id()));
+        let outside =
+            std::env::temp_dir().join(format!("kovcheg-dl-outside-{}", std::process::id()));
         let _ = fs::remove_dir_all(&root);
         let _ = fs::remove_dir_all(&outside);
         fs::create_dir_all(&root).unwrap();
