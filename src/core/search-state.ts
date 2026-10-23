@@ -1,4 +1,4 @@
-import { ACTIVE_SOURCE_IDS } from "../sources/meta";
+import { ACTIVE_SOURCE_IDS, SOURCE_IDS, SOURCE_META } from "../sources/meta";
 import type { SourceId, TorrentResult } from "../sources/types";
 
 export interface SourceState {
@@ -16,10 +16,19 @@ export interface ConcurrentSearchState {
   total: number;
 }
 
+/**
+ * A row for *every* source, not only the active ones: the record type promises a state per id,
+ * so it must hold one. A disabled source is simply never loading — it reports nothing at all.
+ */
 export function blankPerSource(loading: boolean): Record<SourceId, SourceState> {
   const out = {} as Record<SourceId, SourceState>;
-  for (const id of ACTIVE_SOURCE_IDS) {
-    out[id] = { loading, error: null, code: null, count: 0 };
+  for (const id of SOURCE_IDS) {
+    out[id] = {
+      loading: loading && !SOURCE_META[id].disabled,
+      error: null,
+      code: null,
+      count: 0,
+    };
   }
   return out;
 }
