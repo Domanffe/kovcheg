@@ -37,7 +37,7 @@ buildNpmPackage (finalAttrs: {
   '';
 
   meta = {
-    description = "Torlink browser search CLI (desktop downloads use the Tauri app)";
+    description = "Kovcheg browser search CLI (desktop downloads use the Tauri app)";
     homepage = "https://github.com/Domanffe/kovcheg";
     changelog = "https://github.com/Domanffe/kovcheg/releases/tag/v${finalAttrs.version}";
     license = lib.licenses.mit;

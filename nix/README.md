@@ -1,6 +1,6 @@
 # Flake install
 
-This flake packages the **browser search CLI** (`kovcheg`). Full downloads require the [Torlink-Gui desktop app](https://github.com/Domanffe/kovcheg/releases).
+This flake packages the **browser search CLI** (`kovcheg`). Full downloads require the [Kovcheg desktop app](https://github.com/Domanffe/kovcheg/releases).
 
 ```nix
 inputs = {

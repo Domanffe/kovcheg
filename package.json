@@ -7,8 +7,7 @@
     "kovcheg": "./dist/cli.cjs"
   },
   "files": [
-    "dist",
-    "preview"
+    "dist"
   ],
   "engines": {
     "node": ">=22"
