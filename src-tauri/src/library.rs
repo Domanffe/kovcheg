@@ -360,11 +360,23 @@ fn inside(child: &Path, root: &Path) -> bool {
 
 fn load_games(paths: &Paths) -> Vec<Game> {
     let file = paths.data_dir.join(LIBRARY_FILE);
-    std::fs::read_to_string(file)
-        .ok()
-        .and_then(|raw| serde_json::from_str::<Stored>(&raw).ok())
-        .map(|s| s.games)
-        .unwrap_or_default()
+    let Ok(raw) = std::fs::read_to_string(&file) else {
+        return Vec::new();
+    };
+    match serde_json::from_str::<Stored>(&raw) {
+        Ok(stored) => stored.games,
+        Err(err) => {
+            // Never let a truncated file turn into a silently empty library that the next
+            // save overwrites: keep the evidence and start clean.
+            let backup = file.with_extension(format!("json.corrupt-{}", now_secs()));
+            tracing::error!(
+                "library.json is unreadable ({err:#}); moved to {}",
+                backup.display()
+            );
+            let _ = std::fs::rename(&file, &backup);
+            Vec::new()
+        }
+    }
 }
 
 fn game_id(dir: &str) -> String {
@@ -1307,6 +1319,30 @@ mod tests {
         assert!(!looks_like_setup(Path::new("C:/dl/GAME/Game.exe")));
         assert!(!looks_like_setup(Path::new("C:/dl/GAME/unins000.exe")));
         assert!(!looks_like_setup(Path::new("C:/dl/GAME/vcredist_x64.exe")));
+    }
+
+    #[test]
+    fn corrupt_library_is_set_aside_instead_of_wiped() {
+        let dir = temp_dir("corrupt");
+        let paths = Paths {
+            config_file: dir.join("config.json"),
+            queue_file: dir.join("queue.json"),
+            history_file: dir.join("history.json"),
+            seeds_file: dir.join("seeds.json"),
+            torrents_dir: dir.join("torrents"),
+            data_dir: dir.clone(),
+        };
+        let file = dir.join("library.json");
+        std::fs::write(&file, "{\"games\": [ truncated").unwrap();
+
+        assert!(load_games(&paths).is_empty());
+        assert!(!file.exists(), "corrupt library.json must be moved away");
+        let kept = std::fs::read_dir(&dir)
+            .unwrap()
+            .flatten()
+            .any(|e| e.file_name().to_string_lossy().contains(".corrupt-"));
+        assert!(kept, "expected a .corrupt- backup next to the data");
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]

@@ -98,7 +98,25 @@ fn read_json<T: for<'de> Deserialize<'de>>(path: &Path) -> Vec<T> {
         Ok(s) => s,
         Err(_) => return vec![],
     };
-    serde_json::from_str(&raw).unwrap_or_default()
+    match serde_json::from_str(&raw) {
+        Ok(value) => value,
+        Err(err) => {
+            // A half-written file must not look like "the user has nothing": keep it aside,
+            // otherwise the next save silently replaces real data with an empty list.
+            let stamp = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_secs())
+                .unwrap_or(0);
+            let backup = path.with_extension(format!("corrupt-{stamp}"));
+            tracing::error!(
+                "{} is unreadable ({err:#}); moved to {}",
+                path.display(),
+                backup.display()
+            );
+            let _ = std::fs::rename(path, &backup);
+            vec![]
+        }
+    }
 }
 
 fn write_json_atomic<T: Serialize + ?Sized>(path: &Path, value: &T) -> anyhow::Result<()> {
@@ -189,6 +207,17 @@ mod tests {
         };
         std::fs::write(&paths.queue_file, "{not json").unwrap();
         assert!(load_queue(&paths).is_empty());
+        // the broken file is kept aside instead of being overwritten by the next save
+        let backups: Vec<_> = std::fs::read_dir(&dir)
+            .unwrap()
+            .flatten()
+            .filter(|e| e.file_name().to_string_lossy().contains(".corrupt-"))
+            .collect();
+        assert_eq!(backups.len(), 1, "expected one .corrupt- backup");
+        assert!(
+            !paths.queue_file.exists(),
+            "the corrupt file should be moved away"
+        );
         let _ = std::fs::remove_dir_all(&dir);
     }
 
