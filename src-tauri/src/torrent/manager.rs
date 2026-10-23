@@ -167,6 +167,31 @@ impl SeedFields {
     }
 }
 
+/// What one tick learns about one torrent, lifted out of the librqbit types so the per-row
+/// handlers can be read, and the stray check tested, without them.
+struct TickStats {
+    progress_pct: u32,
+    progress_bytes: u64,
+    total_bytes: u64,
+    finished: bool,
+    uploaded_bytes: u64,
+    down_speed: u64,
+    up_speed: u64,
+    peers: u32,
+    eta: Option<f64>,
+}
+
+/// True once a seeding torrent has looked like a stray download for enough consecutive ticks.
+/// Any clean tick — still inside the grace window, or simply not downloading — resets the streak.
+fn stray_seed_confirmed(now: u64, grace_until: u64, straying: bool, hits: &mut u32) -> bool {
+    if now <= grace_until || !straying {
+        *hits = 0;
+        return false;
+    }
+    *hits += 1;
+    *hits >= STRAY_TICKS
+}
+
 fn build_piece_map(api: &Api, hash: &str, downloading: bool) -> Option<PieceMap> {
     let id = torrent_id(hash).ok()?;
     let dump = api.api_dump_haves(id).ok()?;
@@ -691,18 +716,11 @@ impl TorrentManager {
 
         for torrent in list.torrents {
             let hash = torrent.info_hash;
-            if hash.is_empty() {
-                continue;
-            }
-
-            let Some(stats) = torrent.stats.as_ref() else {
+            let Some(stats) = torrent.stats.as_ref().filter(|_| !hash.is_empty()) else {
                 continue;
             };
 
             self.cache_torrent_meta_if_ready(&hash);
-
-            let progress_pct =
-                progress_percent(stats.progress_bytes, stats.total_bytes, stats.finished);
 
             let (down_speed, up_speed, peers, eta) = if let Some(live) = &stats.live {
                 let down = mbps_to_bytes(live.download_speed.mbps);
@@ -721,66 +739,95 @@ impl TorrentManager {
                 (0, 0, 0, None)
             };
 
-            if let Some(q) = self
-                .queue
-                .iter_mut()
-                .find(|q| norm_hash(&q.id) == norm_hash(&hash))
-            {
-                q.progress = progress_pct.min(100);
-                q.downloaded_bytes = stats.progress_bytes;
-                q.total_bytes = stats.total_bytes;
-                q.speed = down_speed;
-                q.peers = peers;
-                q.eta = eta;
-                if q.status == DownloadStatus::Downloading {
-                    q.piece_map = build_piece_map(&self.api, &hash, down_speed > 0);
-                } else {
-                    q.piece_map = None;
-                }
-                if stats.finished && q.status == DownloadStatus::Downloading {
-                    finished.push(hash.clone());
-                }
-            }
+            let snapshot = TickStats {
+                progress_pct: progress_percent(
+                    stats.progress_bytes,
+                    stats.total_bytes,
+                    stats.finished,
+                ),
+                progress_bytes: stats.progress_bytes,
+                total_bytes: stats.total_bytes,
+                finished: stats.finished,
+                uploaded_bytes: stats.uploaded_bytes,
+                down_speed,
+                up_speed,
+                peers,
+                eta,
+            };
 
-            if let Some(s) = self.seeds.get_mut(&norm_hash(&hash)) {
-                s.upload_speed = up_speed;
-                s.uploaded = stats.uploaded_bytes;
-                s.peers = peers;
-
-                if s.status == SeedStatus::Seeding {
-                    let key = norm_hash(&hash);
-                    let grace = self.seed_grace_until.get(&key).copied().unwrap_or(0);
-                    if now_ms() > grace
-                        && stray_download(stats.total_bytes, stats.progress_bytes, down_speed)
-                    {
-                        let hits = self.stray_hits.entry(key.clone()).or_insert(0);
-                        *hits += 1;
-                        if *hits >= STRAY_TICKS {
-                            self.stray_hits.remove(&key);
-                            self.seed_grace_until.remove(&key);
-                            s.status = SeedStatus::Missing;
-                            s.upload_speed = 0;
-                            s.peers = 0;
-                        }
-                    } else {
-                        self.stray_hits.insert(key, 0);
-                    }
-                }
-            }
+            self.apply_torrent_stats(&hash, &snapshot, &mut finished);
+            self.apply_seed_stats(&hash, &snapshot);
         }
 
         for id in finished {
             self.complete_download(&id);
         }
-
-        let sig = queue_signature(&self.queue, &self.seeds);
-        if sig != self.last_persist_sig {
-            match self.persist_queue().and_then(|()| self.persist_seeds()) {
-                Ok(()) => self.last_persist_sig = sig,
-                Err(e) => warn!("persist state failed: {e:#}"),
-            }
-        }
+        self.persist_if_changed();
         Ok(())
+    }
+
+    /// Progress, speeds and the piece map of one download row.
+    fn apply_torrent_stats(&mut self, hash: &str, s: &TickStats, finished: &mut Vec<String>) {
+        let Some(q) = self
+            .queue
+            .iter_mut()
+            .find(|q| norm_hash(&q.id) == norm_hash(hash))
+        else {
+            return;
+        };
+        q.progress = s.progress_pct.min(100);
+        q.downloaded_bytes = s.progress_bytes;
+        q.total_bytes = s.total_bytes;
+        q.speed = s.down_speed;
+        q.peers = s.peers;
+        q.eta = s.eta;
+        q.piece_map = if q.status == DownloadStatus::Downloading {
+            build_piece_map(&self.api, hash, s.down_speed > 0)
+        } else {
+            None
+        };
+        if s.finished && q.status == DownloadStatus::Downloading {
+            finished.push(hash.to_string());
+        }
+    }
+
+    /// Upload stats of one seed row, plus the "the files are gone" policy.
+    fn apply_seed_stats(&mut self, hash: &str, s: &TickStats) {
+        let key = norm_hash(hash);
+        let Some(seed) = self.seeds.get_mut(&key) else {
+            return;
+        };
+        seed.upload_speed = s.up_speed;
+        seed.uploaded = s.uploaded_bytes;
+        seed.peers = s.peers;
+        if seed.status != SeedStatus::Seeding {
+            return;
+        }
+        let grace_until = self.seed_grace_until.get(&key).copied().unwrap_or(0);
+        let straying = stray_download(s.total_bytes, s.progress_bytes, s.down_speed);
+        let confirmed = {
+            let hits = self.stray_hits.entry(key.clone()).or_insert(0);
+            stray_seed_confirmed(now_ms(), grace_until, straying, hits)
+        };
+        if confirmed {
+            self.stray_hits.remove(&key);
+            self.seed_grace_until.remove(&key);
+            seed.status = SeedStatus::Missing;
+            seed.upload_speed = 0;
+            seed.peers = 0;
+        }
+    }
+
+    /// Writes queue and seeds only when their signature changed.
+    fn persist_if_changed(&mut self) {
+        let sig = queue_signature(&self.queue, &self.seeds);
+        if sig == self.last_persist_sig {
+            return;
+        }
+        match self.persist_queue().and_then(|()| self.persist_seeds()) {
+            Ok(()) => self.last_persist_sig = sig,
+            Err(e) => warn!("persist state failed: {e:#}"),
+        }
     }
 
     fn complete_download(&mut self, id: &str) {
@@ -868,7 +915,7 @@ impl TorrentManager {
 
 #[cfg(test)]
 mod tests {
-    use super::progress_percent;
+    use super::{progress_percent, stray_seed_confirmed, STRAY_TICKS};
 
     #[test]
     fn progress_never_reaches_100_before_finished() {
@@ -877,5 +924,33 @@ mod tests {
         assert_eq!(progress_percent(1000, 1000, true), 100);
         assert_eq!(progress_percent(0, 0, false), 0);
         assert_eq!(progress_percent(5, 10, false), 50);
+    }
+
+    #[test]
+    fn a_seed_needs_consecutive_stray_ticks_before_it_is_marked_missing() {
+        let mut hits = 0;
+        for _ in 1..STRAY_TICKS {
+            assert!(!stray_seed_confirmed(1_000, 0, true, &mut hits));
+        }
+        assert!(stray_seed_confirmed(1_000, 0, true, &mut hits));
+    }
+
+    #[test]
+    fn one_clean_tick_resets_the_stray_streak() {
+        let mut hits = 0;
+        assert!(!stray_seed_confirmed(1_000, 0, true, &mut hits));
+        assert!(!stray_seed_confirmed(1_000, 0, false, &mut hits));
+        assert_eq!(hits, 0);
+        for _ in 1..STRAY_TICKS {
+            assert!(!stray_seed_confirmed(1_000, 0, true, &mut hits));
+        }
+        assert!(stray_seed_confirmed(1_000, 0, true, &mut hits));
+    }
+
+    #[test]
+    fn the_grace_window_never_counts_as_straying() {
+        let mut hits = 0;
+        assert!(!stray_seed_confirmed(1_000, 5_000, true, &mut hits));
+        assert_eq!(hits, 0);
     }
 }
